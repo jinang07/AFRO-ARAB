@@ -1,0 +1,368 @@
+import React, { useState, useEffect } from 'react';
+import { User, Supplier, AccountStatus } from '../types';
+import { api } from '../services/api';
+
+const Suppliers: React.FC<{ user: User }> = ({ user }) => {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [pendingSuppliers, setPendingSuppliers] = useState<Supplier[]>([]);
+  const [currentTab, setCurrentTab] = useState<'Active' | 'Pending'>('Active');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [formData, setFormData] = useState<Partial<Supplier>>({
+    companyName: '', personalName: '', designation: '', mobileNumber: '',
+    email: '', address: '', city: '', state: '',
+    pinCode: '', country: 'India', website: '', businessCategory: '',
+    iecCode: '', gstNumber: '', panNumber: '', turnover2y: '',
+    products: []
+  });
+
+  const isAdmin = user.role === 'ADMIN';
+  const isAgent = user.role === 'AGENT';
+  const isSupplier = user.role === 'SUPPLIER';
+  const isPartner = user.role === 'PARTNER';
+  const canManage = isAdmin || isAgent;
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  const fetchSuppliers = async () => {
+    try {
+      const data = await api.get('/suppliers/');
+      setSuppliers(data.filter((s: Supplier) => s.status === 'APPROVED'));
+      setPendingSuppliers(data.filter((s: Supplier) => s.status === 'PENDING'));
+    } catch (err) {
+      console.error('Failed to fetch suppliers', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingSupplier) {
+        await api.put(`/suppliers/${editingSupplier.id}/`, formData);
+      } else {
+        await api.post('/suppliers/', { ...formData, status: 'APPROVED' });
+      }
+      fetchSuppliers();
+      setIsModalOpen(false);
+    } catch (err) {
+      alert('Failed to save supplier');
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this supplier record?')) return;
+    try {
+      await api.delete(`/suppliers/${id}/`);
+      fetchSuppliers();
+    } catch (err) {
+      alert('Failed to delete supplier');
+    }
+  };
+
+  const handleVettingDecision = async (id: number, newStatus: AccountStatus) => {
+    if (!confirm(`Confirm ${newStatus.toLowerCase()} decision?`)) return;
+    try {
+      await api.patch(`/suppliers/${id}/`, { status: newStatus });
+      fetchSuppliers();
+    } catch (err) {
+      alert('Failed to update status');
+    }
+  };
+
+  const filtered = suppliers.filter(s =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.country || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#224194]"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Supply Network</h2>
+        {isAdmin && (
+          <button
+            onClick={() => { setEditingSupplier(null); setFormData({}); setIsModalOpen(true); }}
+            className="bg-[#224194] text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-[#224194]/30 active:scale-90 transition-all"
+          >
+            <i className="fa-solid fa-plus"></i>
+          </button>
+        )}
+      </div>
+
+      {(isAdmin || isAgent) && (
+        <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200">
+          <button
+            onClick={() => setCurrentTab('Active')}
+            className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentTab === 'Active' ? 'bg-white text-[#224194] shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Supplier Fleet ({suppliers.length})
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setCurrentTab('Pending')}
+              className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${currentTab === 'Pending' ? 'bg-white text-[#224194] shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Pending Approval ({pendingSuppliers.length})
+              {pendingSuppliers.length > 0 && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>}
+            </button>
+          )}
+        </div>
+      )}
+
+      {currentTab === 'Active' ? (
+        <div className="space-y-6">
+          <div className="relative">
+            <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input
+              type="text"
+              placeholder="Search active suppliers..."
+              className="w-full pl-12 pr-4 py-4 bg-white rounded-3xl border border-slate-100 shadow-sm focus:ring-2 focus:ring-[#224194] outline-none transition-all text-sm font-medium"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-4">
+            {filtered.map(supplier => (
+              <div
+                key={supplier.id}
+                onClick={() => { setViewingSupplier(supplier); setIsDetailOpen(true); }}
+                className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:border-blue-200 cursor-pointer transition-all group"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-lg leading-tight">{supplier.companyName}</h3>
+                    <p className="text-slate-500 text-xs flex items-center gap-1 mt-1">
+                      <i className="fa-solid fa-location-dot"></i> {supplier.city}, {supplier.country}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {(isAdmin || (isSupplier && supplier.id === user.id)) && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); setEditingSupplier(supplier); setFormData(supplier as any); setIsModalOpen(true); }} className="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 hover:text-[#224194] flex items-center justify-center">
+                          <i className="fa-solid fa-pen text-[10px]"></i>
+                        </button>
+                        {isAdmin && (
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(supplier.id); }} className="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center">
+                            <i className="fa-solid fa-trash text-[10px]"></i>
+                          </button>
+                        )}
+                      </>
+                    )}
+                    <div className="bg-blue-50 text-[#224194] px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ml-1">Verified</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {supplier.products?.map((p: any) => (
+                    <span key={p} className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-bold">
+                      {p}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white text-[10px] font-bold">
+                      {(supplier.personalName || 'S').split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div className="text-[11px]">
+                      <p className="font-bold text-slate-900 leading-none">{supplier.personalName || 'Contact Person'}</p>
+                      <p className="text-slate-500 mt-1">{supplier.mobileNumber || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <a href={`tel:${supplier.mobileNumber}`} onClick={(e) => e.stopPropagation()} className="text-[#224194] w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center active:scale-90 transition-all">
+                      <i className="fa-solid fa-phone text-xs"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {pendingSuppliers.map(reg => (
+            <div
+              key={reg.id}
+              className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:border-amber-200 transition-all animate-in slide-in-from-right-4"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 border border-slate-100">
+                    <i className="fa-solid fa-building-circle-check text-xl"></i>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">{reg.companyName}</h3>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{reg.city}, {reg.country}</p>
+                  </div>
+                </div>
+                <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-2.5 py-1.5 rounded-xl uppercase tracking-widest border border-amber-100">Pending Approval</span>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                <div className="flex gap-2">
+                  <button onClick={() => handleVettingDecision(reg.id, 'REJECTED')} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase">Reject</button>
+                  <button onClick={() => handleVettingDecision(reg.id, 'APPROVED')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">Approve</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isDetailOpen && viewingSupplier && (
+        <div className="fixed inset-0 z-[250] flex items-end sm:items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-8">
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{viewingSupplier.name}</h3>
+                  <p className="text-[10px] text-[#224194] font-black uppercase tracking-widest mt-1 italic">Full Master Record Profile</p>
+                </div>
+                <button onClick={() => setIsDetailOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 hover:text-slate-900 flex items-center justify-center">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              <div className="max-h-[70vh] overflow-y-auto no-scrollbar pr-2 space-y-8 pb-6">
+                <section className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block">1. Identity & Presence</label>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Company Name</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.companyName}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Category</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.businessCategory || 'N/A'}</p>
+                  </div>
+                  <div className="col-span-2 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">HQ Address</p>
+                    <p className="text-xs font-bold text-slate-900 leading-relaxed">
+                      {viewingSupplier.address}, {viewingSupplier.city}, {viewingSupplier.state}, {viewingSupplier.pinCode}, {viewingSupplier.country}
+                    </p>
+                  </div>
+                </section>
+
+                <section className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2 block">2. Executive Contact</label>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Primary POC</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.personalName}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Designation</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.designation}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Mobile</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.mobileNumber}</p>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Professional Email</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.email}</p>
+                  </div>
+                </section>
+
+                <section className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-2 block">3. Regulatory & Financials</label>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                    <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">IEC CODE</p>
+                    <p className="text-xs font-black text-slate-900">{viewingSupplier.iecCode}</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+                    <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">PAN NUMBER</p>
+                    <p className="text-xs font-black text-slate-900">{viewingSupplier.panNumber}</p>
+                  </div>
+                  <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 col-span-2">
+                    <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">2-YEAR AVERAGE TURNOVER</p>
+                    <p className="text-sm font-black text-slate-900">{viewingSupplier.turnover2y}</p>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isModalOpen && (isAdmin || isSupplier) && (
+        <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">
+                    {editingSupplier ? 'Master Record: Update' : 'Master Record: New Supplier'}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Central Intelligence Registry</p>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 hover:text-slate-900 flex items-center justify-center">
+                  <i className="fa-solid fa-xmark text-lg"></i>
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="space-y-6 max-h-[70vh] overflow-y-auto no-scrollbar pr-2 pb-4">
+                <div className="space-y-4">
+                  <label className="text-[9px] font-black text-[#224194] uppercase tracking-[0.2em] block border-b border-blue-50 pb-2">1. Corporate Identity</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Company Name</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.companyName} onChange={e => setFormData({ ...formData, companyName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Business Category</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.businessCategory} onChange={e => setFormData({ ...formData, businessCategory: e.target.value })} placeholder="e.g. Textiles" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <label className="text-[9px] font-black text-[#224194] uppercase tracking-[0.2em] block border-b border-blue-50 pb-2">2. Executive Contact</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Personal Name</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.personalName} onChange={e => setFormData({ ...formData, personalName: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Designation</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.designation} onChange={e => setFormData({ ...formData, designation: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" className="w-full py-5 bg-[#224194] text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-[#224194]/20 active:scale-95 transition-all mt-6">
+                  Authorize & Commit Record
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Suppliers;

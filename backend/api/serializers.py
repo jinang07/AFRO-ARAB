@@ -5,7 +5,7 @@ from .models import Supplier, Buyer, Order, User, Notification
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'phone_number', 'country', 'region', 'password')
+        fields = ('id', 'username', 'email', 'role', 'phone_number', 'country', 'region', 'password', 'name', 'identity_card_number', 'first_name', 'last_name')
         extra_kwargs = {'password': {'write_only': True, 'required': False}}
 
     def create(self, validated_data):
@@ -38,8 +38,8 @@ class BuyerSerializer(serializers.ModelSerializer):
         ret = super().to_representation(instance)
         request = self.context.get('request')
         
-        # Security Logic: Suppliers see only needs and business activities (identity protected)
-        if request and request.user.role == 'SUPPLIER':
+        # Suppliers/Partners see only requirements & business profile (identity protected)
+        if request and request.user.role in ['SUPPLIER', 'PARTNER']:
             # Mask sensitive data
             visible_data = {
                 'id': ret['id'],
@@ -47,17 +47,16 @@ class BuyerSerializer(serializers.ModelSerializer):
                 'country': ret['country'],
                 'business_activities': ret['business_activities'],
                 'product_need': ret['product_need'],
-                # Added New Fields for Supplier Visibility
                 'destination_port': ret.get('destination_port'),
                 'product_specs': ret.get('product_specs'),
                 'required_quantity': ret.get('required_quantity'),
                 'target_price': ret.get('target_price'),
                 'preferred_incoterms': ret.get('preferred_incoterms'),
                 'mandatory_certifications': ret.get('mandatory_certifications'),
+                'delivery_timeline': ret.get('delivery_timeline'),
             }
             return visible_data
             
-        # Associate Partners see ALL details (no masking)
         return ret
 
 class OrderSerializer(serializers.ModelSerializer):

@@ -1,25 +1,37 @@
-# Logs
-2: logs
-3: *.log
-4: npm-debug.log*
-5: yarn-debug.log*
-6: yarn-error.log*
-7: pnpm-debug.log*
-8: lerna-debug.log*
-9: 
-10: node_modules
-11: dist
-12: dist-ssr
-13: *.local
-14: .env
-15: 
-16: # Editor directories and files
-17: .vscode/*
-18: !.vscode/extensions.json
-19: .idea
-20: .DS_Store
-21: *.suo
-22: *.ntvs*
-23: *.njsproj
-24: *.sln
-25: *.sw?
+# General
+.DS_Store
+.env
+*.local
+.vscode/
+.idea/
+
+# Backend (Django)
+backend/__pycache__/
+backend/*.pyc
+backend/db.sqlite3
+backend/db_v2.sqlite3
+backend/media/
+backend/static/
+backend/logs/
+backend/*.log
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# Root
+node_modules/
+dist/
+.vite/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

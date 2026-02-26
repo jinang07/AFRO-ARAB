@@ -11,9 +11,16 @@ class User(AbstractUser):
         ('PARTNER', 'Associate Partner'),
     )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='AGENT')
+    name = models.CharField(max_length=255, blank=True)
     phone_number = models.CharField(max_length=20, null=True, blank=True)
+    identity_card_number = models.CharField(max_length=50, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
     region = models.CharField(max_length=100, null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        if self.is_superuser and self.role != 'ADMIN':
+            self.role = 'ADMIN'
+        super().save(*args, **kwargs)
 
 class Supplier(models.Model):
     STATUS_CHOICES = (
@@ -64,7 +71,7 @@ class Buyer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255) # Personal name
     company_name = models.CharField(max_length=255)
-    designation = models.CharField(max_length=255)
+    designation = models.CharField(max_length=255, null=True, blank=True)
     mobile_number = models.CharField(max_length=20)
     country = models.CharField(max_length=100)
     business_activities = models.TextField() # Products they deal in
@@ -93,10 +100,10 @@ class Buyer(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = (
         ('QUOTATION_SENT', 'Quotation Sent'),
-        ('APPROVED', 'Approved'),
+        ('QUOTATION_APPROVED', 'Quotation Approved'),
         ('MOU_SIGN', 'MOU Sign'),
-        ('FOLLOW_UPS', 'Post Quotation Follow ups'),
-        ('CONFIRMED', 'Order Confirmed'),
+        ('POST_QUOTATION_FOLLOW_UPS', 'Post Quotation Follow ups'),
+        ('ORDER_CONFIRMED', 'Order Confirmed'),
         ('PROCESSING', 'Processing'),
         ('SHIPPED', 'Shipped'),
         ('DELIVERED', 'Delivered'),
