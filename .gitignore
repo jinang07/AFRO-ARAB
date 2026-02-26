@@ -1,0 +1,25 @@
+# Logs
+2: logs
+3: *.log
+4: npm-debug.log*
+5: yarn-debug.log*
+6: yarn-error.log*
+7: pnpm-debug.log*
+8: lerna-debug.log*
+9: 
+10: node_modules
+11: dist
+12: dist-ssr
+13: *.local
+14: .env
+15: 
+16: # Editor directories and files
+17: .vscode/*
+18: !.vscode/extensions.json
+19: .idea
+20: .DS_Store
+21: *.suo
+22: *.ntvs*
+23: *.njsproj
+24: *.sln
+25: *.sw?

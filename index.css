@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --color-orange: #f49022;
+  --color-blue: #224194;
+  --color-turquoise: #2e9782;
+  
+  /* Primary Utility mappings */
+  --color-primary: var(--color-blue);
+  --color-secondary: var(--color-orange);
+  --color-accent: var(--color-turquoise);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
