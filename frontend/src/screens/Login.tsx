@@ -17,6 +17,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPartnerPassword, setShowPartnerPassword] = useState(false);
+  const [showPartnerConfirmPassword, setShowPartnerConfirmPassword] = useState(false);
   const [regStep, setRegStep] = useState(1);
   const [formData, setFormData] = useState({
     companyName: '', personalName: '', designation: '', mobileNumber: '',
@@ -192,8 +195,18 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                 <input required placeholder="Username" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.username} onChange={e => setPartnerData({ ...partnerData, username: e.target.value })} />
                 <input required placeholder="Full Name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.fullName} onChange={e => setPartnerData({ ...partnerData, fullName: e.target.value })} />
                 <input required type="email" placeholder="Email Address" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.email} onChange={e => setPartnerData({ ...partnerData, email: e.target.value })} />
-                <input required type="password" placeholder="Create Password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.password} onChange={e => setPartnerData({ ...partnerData, password: e.target.value })} />
-                <input required type="password" placeholder="Confirm Password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.confirmPassword} onChange={e => setPartnerData({ ...partnerData, confirmPassword: e.target.value })} />
+                <div className="relative">
+                  <input required type={showPartnerPassword ? "text" : "password"} placeholder="Create Password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.password} onChange={e => setPartnerData({ ...partnerData, password: e.target.value })} />
+                  <button type="button" onClick={() => setShowPartnerPassword(!showPartnerPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#2e9782] transition-colors">
+                    <i className={`fa-solid ${showPartnerPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+                <div className="relative">
+                  <input required type={showPartnerConfirmPassword ? "text" : "password"} placeholder="Confirm Password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#2e9782]/20 outline-none" value={partnerData.confirmPassword} onChange={e => setPartnerData({ ...partnerData, confirmPassword: e.target.value })} />
+                  <button type="button" onClick={() => setShowPartnerConfirmPassword(!showPartnerConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#2e9782] transition-colors">
+                    <i className={`fa-solid ${showPartnerConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
               </div>
 
               <div className="pt-4">
@@ -341,12 +354,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                     <i className="fa-solid fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
                     <input
                       required
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.5rem] pl-12 pr-4 py-4 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/10 focus:bg-white outline-none transition-all"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.5rem] pl-12 pr-12 py-4 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/10 focus:bg-white outline-none transition-all"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#224194] transition-colors"
+                    >
+                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    </button>
                   </div>
                 </div>
 
