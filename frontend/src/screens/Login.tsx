@@ -96,9 +96,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
   // --- Registration View ---
   if (isRegistering) {
     return (
-      <div className="min-h-[100dvh] bg-[#224194] flex flex-col items-center p-6 pb-20 overflow-y-auto">
+      <div className="min-h-[100dvh] bg-slate-50 flex flex-col items-center p-6 pb-20 overflow-y-auto">
         <div className="w-full max-w-md">
-          <button onClick={() => { setIsRegistering(false); setSelectionMode(true); }} className="mb-6 flex items-center gap-2 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">
+          <button onClick={() => { setIsRegistering(false); setSelectionMode(true); }} className="mb-6 flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-[#224194] transition-colors">
             <i className="fa-solid fa-arrow-left"></i> Back to Gateway
           </button>
 
@@ -175,9 +175,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
   // --- Partner Onboarding View ---
   if (isPartnerOnboarding) {
     return (
-      <div className="min-h-[100dvh] bg-[#2e9782] flex flex-col items-center p-6 pb-20 overflow-y-auto">
+      <div className="min-h-[100dvh] bg-slate-50 flex flex-col items-center p-6 pb-20 overflow-y-auto">
         <div className="w-full max-w-md">
-          <button onClick={() => { setIsPartnerOnboarding(false); setSelectionMode(true); }} className="mb-6 flex items-center gap-2 text-white/70 font-bold text-xs uppercase tracking-widest hover:text-white transition-colors">
+          <button onClick={() => { setIsPartnerOnboarding(false); setSelectionMode(true); }} className="mb-6 flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] hover:text-[#2e9782] transition-colors">
             <i className="fa-solid fa-arrow-left"></i> Back to Gateway
           </button>
 
