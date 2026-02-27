@@ -23,7 +23,7 @@ export type Role = 'ADMIN' | 'AGENT' | 'SUPPLIER' | 'PARTNER';
 export type AccountStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface User {
-  id: number;
+  id: string;
   username: string;
   name?: string;
   first_name?: string;
@@ -66,7 +66,7 @@ export interface Endpoint {
 }
 
 export interface Supplier {
-  id: number;
+  id: string;
   name: string; // Alias for companyName
   companyName: string;
   personalName?: string;
@@ -94,10 +94,14 @@ export interface Supplier {
   status?: AccountStatus;
   createdAt?: string;
   products?: any[];
+  accountName?: string;
+  accountNumber?: string;
+  branch?: string;
+  ifscCode?: string;
 }
 
 export interface Buyer {
-  id: number;
+  id: string;
   name: string;
   companyName: string;
   designation: string;
@@ -107,7 +111,6 @@ export interface Buyer {
   productNeed: string;
   email: string;
   website: string;
-  turnover?: string; // Alias for turnover2y
   turnover2y: string;
   destinationPort: string;
   productSpecs: string;
@@ -118,7 +121,8 @@ export interface Buyer {
   deliveryTimeline: string;
   mandatoryCertifications?: string;
   createdBy: number;
-  assignedAgent?: number;    // ID or Username of the assigned agent
+  assignedAgent?: string;
+  agentName?: string;
   createdAt?: string;
 }
 
@@ -140,11 +144,11 @@ export type OrderStatus =
   | 'ORDER_COMPLETED';
 
 export interface Order {
-  id: number;
+  id: string;
   readableId?: string;
-  supplier: number; // Supplier ID
-  buyer: number;    // Buyer ID
-  agent?: number;   // Agent ID
+  supplier: string; // Supplier ID
+  buyer: string;    // Buyer ID
+  agent?: string;   // Agent ID
   region?: string;
   product?: string;
   supplierName?: string;

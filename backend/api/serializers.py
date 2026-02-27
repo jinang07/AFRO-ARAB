@@ -30,9 +30,38 @@ class SupplierSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class BuyerSerializer(serializers.ModelSerializer):
+    agent_name = serializers.ReadOnlyField(source='assigned_agent.username')
+    
     class Meta:
         model = Buyer
         fields = '__all__'
+        extra_kwargs = {
+            'created_by': {'read_only': True},
+        }
+
+    def validate(self, data):
+        request = self.context.get('request')
+        user = request.user if request else None
+        
+        # Only Admins can set or change assigned_agent
+        if 'assigned_agent' in data and user and user.role != 'ADMIN':
+            # If the field is present but user is not admin, we might want to:
+            # 1. Ignore it (keep old value)
+            # 2. Raise error
+            # Decision: Raise error for clarity if they try to change it explicitly
+            if self.instance and data['assigned_agent'] != self.instance.assigned_agent:
+                raise serializers.ValidationError({"assigned_agent": "Only administrators can reassign agents."})
+            elif not self.instance:
+                # On creation, agents shouldn't be able to assign themselves or others
+                # unless they are Admin. But wait, if an agent adds a buyer, 
+                # maybe it should be auto-assigned to them? 
+                # Let's check requirements. "if the buyer added is assigned to any agent so only that buyer should visible to that agent panel"
+                # If an agent adds it, let's keep it null and let Admin assign, or auto-assign.
+                # Currently, views.py handle_create doesn't auto-assign.
+                # So we block it for non-admins.
+                data.pop('assigned_agent', None)
+
+        return data
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)

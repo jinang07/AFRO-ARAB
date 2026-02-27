@@ -48,11 +48,11 @@ class Supplier(models.Model):
     website = models.URLField(null=True, blank=True)
     
     # Business Info
-    business_category = models.CharField(max_length=255)
-    iec_code = models.CharField(max_length=50)
+    business_category = models.CharField(max_length=255, null=True, blank=True)
+    iec_code = models.CharField(max_length=50, null=True, blank=True)
     gst_number = models.CharField(max_length=50, null=True, blank=True)
-    pan_number = models.CharField(max_length=50)
-    turnover_2y = models.CharField(max_length=100)
+    pan_number = models.CharField(max_length=50, null=True, blank=True)
+    turnover_2y = models.CharField(max_length=100, null=True, blank=True)
     
     # Associate Partner Link
     associate_partner = models.CharField(max_length=150, null=True, blank=True) # Username of the partner
@@ -60,6 +60,12 @@ class Supplier(models.Model):
     # Verification Files
     brochure_file = models.FileField(upload_to='brochures/', null=True, blank=True)
     payment_screenshot = models.ImageField(upload_to='payments/', null=True, blank=True)
+    
+    # Bank Details
+    account_name = models.CharField(max_length=255, null=True, blank=True)
+    account_number = models.CharField(max_length=50, null=True, blank=True)
+    branch = models.CharField(max_length=255, null=True, blank=True)
+    ifsc_code = models.CharField(max_length=20, null=True, blank=True)
     
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -78,7 +84,7 @@ class Buyer(models.Model):
     product_need = models.TextField()        # Specific current requirement
     email = models.EmailField()
     website = models.URLField(null=True, blank=True)
-    turnover_2y = models.CharField(max_length=100)
+    turnover_2y = models.CharField(max_length=100, null=True, blank=True)
     
     # New Fields
     destination_port = models.CharField(max_length=255, null=True, blank=True)

@@ -20,13 +20,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
   const [showPassword, setShowPassword] = useState(false);
   const [showPartnerPassword, setShowPartnerPassword] = useState(false);
   const [showPartnerConfirmPassword, setShowPartnerConfirmPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [regStep, setRegStep] = useState(1);
   const [formData, setFormData] = useState({
     companyName: '', personalName: '', designation: '', mobileNumber: '',
     telephoneNumber: '', email: '', address: '', city: '', state: '',
     pinCode: '', country: '', website: '', businessCategory: '',
-    iecCode: '', gstNumber: '', panNumber: '', turnover2y: ''
+    iecCode: '', gstNumber: '', panNumber: '', turnover2y: '',
+    accountName: 'Afro Arab Business Association', accountNumber: '50200111853466',
+    branch: 'Ring Road - Surat', ifscCode: 'HDFC0000251',
+    associatePartner: '', regPassword: ''
   });
+  const [brochureFile, setBrochureFile] = useState<File | null>(null);
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [partnerData, setPartnerData] = useState({
     username: '',
     fullName: '',
@@ -57,8 +63,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
     e.preventDefault();
     setIsLoading(true);
     try {
-      await api.post('/suppliers/register/', formData);
-      alert('Registration submitted successfully! Your account is now pending admin approval.');
+      const submitData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value && key !== 'accountName' && key !== 'accountNumber' && key !== 'branch' && key !== 'ifscCode' && key !== 'regPassword') {
+          const snakeKey = key.replace(/([a-z])([A-Z0-9])/g, '$1_$2').toLowerCase();
+          submitData.append(snakeKey, value);
+        }
+      });
+      submitData.append('password', formData.regPassword);
+      if (brochureFile) submitData.append('brochure_file', brochureFile);
+      if (paymentScreenshot) submitData.append('payment_screenshot', paymentScreenshot);
+
+      await api.post('/suppliers/register/', submitData);
+      alert('Registration submitted successfully! Your request has been sent to the admin for checking details and payment screenshot. You cannot login until the admin approves.');
       setIsRegistering(false);
       setSelectionMode(true);
       setRegStep(1);
@@ -105,13 +122,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
           <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-white/20 mb-8">
             <div className="mb-8">
               <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Supplier Onboarding</h2>
-              <p className="text-xs text-slate-500 mt-1 font-medium italic">Step {regStep} of 3 • Enterprise Verification</p>
+              <p className="text-xs text-slate-500 mt-1 font-medium italic">Step {regStep} of 4 • Enterprise Verification</p>
               <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
-                <div className="h-full bg-[#f49022] transition-all duration-500" style={{ width: `${(regStep / 3) * 100}%` }}></div>
+                <div className="h-full bg-[#f49022] transition-all duration-500" style={{ width: `${(regStep / 4) * 100}%` }}></div>
               </div>
             </div>
 
-            <form onSubmit={regStep === 3 ? handleRegisterSubmit : (e) => { e.preventDefault(); setRegStep(s => s + 1); }} className="space-y-4">
+            <form onSubmit={regStep === 4 ? handleRegisterSubmit : (e) => { e.preventDefault(); setRegStep(s => s + 1); }} className="space-y-4">
               {regStep === 1 && (
                 <div className="space-y-4 animate-in slide-in-from-right duration-300">
                   <div className="group">
@@ -122,9 +139,21 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                   <input required placeholder="Designation" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.designation} onChange={e => setFormData({ ...formData, designation: e.target.value })} />
                   <div className="grid grid-cols-2 gap-3">
                     <input required placeholder="Mobile Number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.mobileNumber} onChange={e => setFormData({ ...formData, mobileNumber: e.target.value })} />
-                    <input placeholder="Telephone" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.telephoneNumber} onChange={e => setFormData({ ...formData, telephoneNumber: e.target.value })} />
+                    <input placeholder="Telephone (Optional)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.telephoneNumber} onChange={e => setFormData({ ...formData, telephoneNumber: e.target.value })} />
                   </div>
                   <input required type="email" placeholder="Email Address" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                  <div className="relative">
+                    <input required type={showRegPassword ? "text" : "password"} placeholder="Set Password (Login Credential)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.regPassword} onChange={e => setFormData({ ...formData, regPassword: e.target.value })} />
+                    <button type="button" onClick={() => setShowRegPassword(!showRegPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                      <i className={`fa-solid ${showRegPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                    </button>
+                    <p className="text-[9px] text-slate-400 font-bold ml-1 mt-1 uppercase tracking-tighter">Your mobile number and this password will be your login credentials</p>
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Referral</label>
+                    <input placeholder="Associate Partner Username (Optional)" className="w-full bg-indigo-50/50 border border-indigo-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-indigo-300 focus:ring-2 focus:ring-indigo-200 outline-none transition-all" value={formData.associatePartner} onChange={e => setFormData({ ...formData, associatePartner: e.target.value })} />
+                  </div>
                 </div>
               )}
 
@@ -157,12 +186,34 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                 </div>
               )}
 
+              {regStep === 4 && (
+                <div className="space-y-4 animate-in slide-in-from-right duration-300">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Payment & Documents</label>
+
+                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                    <p className="text-[10px] font-black text-[#2e9782] uppercase tracking-[0.1em] mb-2">Registration Fee Payment Details</p>
+                    <p className="text-xs text-slate-700 mb-1"><span className="font-bold">Account Name:</span> {formData.accountName}</p>
+                    <p className="text-xs text-slate-700 mb-1"><span className="font-bold">Account Number:</span> {formData.accountNumber}</p>
+                    <p className="text-xs text-slate-700 mb-1"><span className="font-bold">Branch:</span> {formData.branch}</p>
+                    <p className="text-xs text-slate-700 mb-3"><span className="font-bold">IFSC Code:</span> {formData.ifscCode}</p>
+
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Payment Screenshot (Required Image)</label>
+                    <input required type="file" accept="image/*" className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-[#2e9782] hover:file:bg-emerald-200 transition-all cursor-pointer" onChange={e => setPaymentScreenshot(e.target.files ? e.target.files[0] : null)} />
+                  </div>
+
+                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                    <label className="text-[10px] font-black text-blue-800 uppercase tracking-widest block mb-1">Company Brochure (Required PDF)</label>
+                    <input required type="file" accept=".pdf" className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 transition-all cursor-pointer" onChange={e => setBrochureFile(e.target.files ? e.target.files[0] : null)} />
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-4">
                 {regStep > 1 && (
                   <button type="button" onClick={() => setRegStep(s => s - 1)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest text-xs">Back</button>
                 )}
                 <button type="submit" disabled={isLoading} className="flex-[2] py-4 bg-[#f49022] text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all disabled:opacity-50">
-                  {isLoading ? 'Processing...' : (regStep === 3 ? 'Complete Registration' : 'Next Step')}
+                  {isLoading ? 'Processing...' : (regStep === 4 ? 'Complete Registration' : 'Next Step')}
                 </button>
               </div>
             </form>
@@ -335,12 +386,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
 
               <form onSubmit={handleLoginSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Account Username</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">
+                    {selectedRole === 'SUPPLIER' ? 'Mobile Number' : 'Account Username'}
+                  </label>
                   <div className="relative">
                     <i className="fa-solid fa-user absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 text-sm"></i>
                     <input
                       required
-                      placeholder="username"
+                      placeholder={selectedRole === 'SUPPLIER' ? "enter mobile number" : "username"}
                       className="w-full bg-slate-50 border border-slate-100 rounded-[1.5rem] pl-12 pr-4 py-4 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/10 focus:bg-white outline-none transition-all"
                       value={username}
                       onChange={e => setUsername(e.target.value)}

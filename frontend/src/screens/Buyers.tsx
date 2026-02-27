@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Buyer } from '../types';
 import { api } from '../services/api';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const Buyers: React.FC<{ user: User }> = ({ user }) => {
   const [buyers, setBuyers] = useState<Buyer[]>([]);
@@ -10,8 +11,12 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [agents, setAgents] = useState<User[]>([]);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; buyerId: string | null }>({
+    isOpen: false,
+    buyerId: null
+  });
 
-  const [formData, setFormData] = useState<Partial<Buyer>>({
+  const initialFormData: Partial<Buyer> = {
     name: '',
     companyName: '',
     designation: '',
@@ -31,7 +36,9 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
     deliveryTimeline: '',
     mandatoryCertifications: '',
     assignedAgent: undefined
-  });
+  };
+
+  const [formData, setFormData] = useState<Partial<Buyer>>(initialFormData);
 
   const isSupplier = user.role === 'SUPPLIER';
   const isAdmin = user.role === 'ADMIN';
@@ -66,23 +73,29 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const dataToSave = {
+        ...formData,
+        deliveryTimeline: formData.deliveryTimeline || null
+      };
+
       if (editingBuyer) {
-        await api.put(`/buyers/${editingBuyer.id}/`, formData);
+        await api.put(`/buyers/${editingBuyer.id}/`, dataToSave);
       } else {
-        await api.post('/buyers/', formData);
+        await api.post('/buyers/', dataToSave);
       }
       fetchBuyers();
       setIsModalOpen(false);
-    } catch (err) {
-      alert('Failed to save buyer');
+    } catch (err: any) {
+      console.error('Failed to save buyer:', err);
+      alert(`Failed to save buyer: ${err.message || 'Unknown error'}`);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Permanently remove this buyer from the system?')) return;
+  const handleDelete = async (id: string) => {
     try {
       await api.delete(`/buyers/${id}/`);
       setBuyers(buyers.filter(b => b.id !== id));
+      setDeleteConfirmation({ isOpen: false, buyerId: null });
     } catch (err) {
       alert('Failed to delete buyer');
     }
@@ -92,7 +105,8 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
     (b.companyName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (b.country || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (b.businessActivities || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (b.productNeed || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (b.productNeed || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (b.productSpecs || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isLoading) {
@@ -116,7 +130,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
         </div>
         {(isAdmin || isAgent) && (
           <button
-            onClick={() => { setEditingBuyer(null); setFormData({}); setIsModalOpen(true); }}
+            onClick={() => { setEditingBuyer(null); setFormData(initialFormData); setIsModalOpen(true); }}
             className="bg-[#2e9782] text-white w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg shadow-[#2e9782]/30 active:scale-90 transition-transform"
           >
             <i className="fa-solid fa-plus"></i>
@@ -144,8 +158,14 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                   {isSupplier ? <i className="fa-solid fa-lock text-sm opacity-50"></i> : buyer.companyName[0]}
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight">
+                  <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight flex items-center gap-2">
                     {isSupplier ? 'Verified Customer' : buyer.companyName}
+                    {isAdmin && buyer.agentName && (
+                      <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-bold normal-case items-center gap-1 flex">
+                        <i className="fa-solid fa-user-tie text-[8px]"></i>
+                        {buyer.agentName}
+                      </span>
+                    )}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded uppercase font-black tracking-widest">{buyer.country}</span>
@@ -159,16 +179,16 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                 </div>
               </div>
-              {(isAdmin || isAgent) && (
+              {isAdmin || (isAgent && (buyer.createdBy === Number(user.id) || Number(buyer.assignedAgent) === Number(user.id))) ? (
                 <div className="flex gap-2">
                   <button onClick={() => { setEditingBuyer(buyer); setFormData(buyer as any); setIsModalOpen(true); }} className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-blue-600 flex items-center justify-center transition-colors">
                     <i className="fa-solid fa-pen-to-square text-[10px]"></i>
                   </button>
-                  <button onClick={() => handleDelete(buyer.id)} className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
+                  <button onClick={() => setDeleteConfirmation({ isOpen: true, buyerId: buyer.id })} className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
                     <i className="fa-solid fa-trash text-[10px]"></i>
                   </button>
                 </div>
-              )}
+              ) : null}
             </div>
 
             <div className="space-y-4">
@@ -222,7 +242,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-50 mt-2">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">2Y Turnover</p>
-                  <p className="text-[10px] font-black text-slate-900">{buyer.turnover}</p>
+                  <p className="text-[10px] font-black text-slate-900">{buyer.turnover2y}</p>
                 </div>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Website</p>
@@ -377,7 +397,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                         <select
                           className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none"
                           value={formData.assignedAgent}
-                          onChange={e => setFormData({ ...formData, assignedAgent: e.target.value ? parseInt(e.target.value) : undefined })}
+                          onChange={e => setFormData({ ...formData, assignedAgent: e.target.value || undefined })}
                         >
                           <option value="">Unassigned</option>
                           {agents.map(agent => (
@@ -397,6 +417,15 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        title="Delete Buyer"
+        message="Are you sure you want to permanently remove this buyer from the system? This action cannot be undone."
+        confirmLabel="Delete Buyer"
+        onConfirm={() => deleteConfirmation.buyerId && handleDelete(deleteConfirmation.buyerId)}
+        onCancel={() => setDeleteConfirmation({ isOpen: false, buyerId: null })}
+      />
     </div>
   );
 };

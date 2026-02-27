@@ -4,7 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Supplier, Buyer, Order, User, Notification
 from .serializers import SupplierSerializer, BuyerSerializer, OrderSerializer, UserSerializer, NotificationSerializer
-from django.db import transaction
+from django.db import transaction, models
+from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 
 class IsAdminUser(permissions.BasePermission):
@@ -28,7 +29,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
     def register_partner(self, request):
         username = request.data.get('username')
-        full_name = request.data.get('fullName')
+        full_name = request.data.get('full_name')
         email = request.data.get('email')
         password = request.data.get('password')
 
@@ -71,62 +72,95 @@ class SupplierViewSet(viewsets.ModelViewSet):
             return [IsAdminUser()]
         return [permissions.IsAuthenticated()]
 
+    def perform_update(self, serializer):
+        # Check if status is being updated to APPROVED
+        instance = self.get_object()
+        old_status = instance.status
+        
+        supplier = serializer.save()
+        
+        if old_status != 'APPROVED' and supplier.status == 'APPROVED':
+            # Activate the user
+            if supplier.user:
+                supplier.user.is_active = True
+                supplier.user.save()
+                notify_user(supplier.user, f"Your supplier account for {supplier.company_name} has been APPROVED. You can now login with your mobile number.", type='SUCCESS')
+        elif old_status != 'REJECTED' and supplier.status == 'REJECTED':
+            if supplier.user:
+                user_to_delete = supplier.user
+                # Delete the user, which cascades and deletes the supplier profile and files
+                user_to_delete.delete()
+
     @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
     def register(self, request):
         with transaction.atomic():
             data = request.data
-            username = data.get('email') # Use email as username for suppliers? 
-            # Or generate one? Login.tsx sends formData, doesn't have a username field yet.
-            # Wait, Login.tsx formData: { companyName, personalName, ... }
-            # Let's check Login.tsx again.
             
-            # Use email as default username if not provided
-            username = data.get('email')
-            if not username:
-                return Response({'error': 'Email is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
+            # Use mobile_number as username for suppliers
+            mobile_number = data.get('mobile_number')
+            password = data.get('password')
+            
+            if not mobile_number:
+                return Response({'error': 'Mobile number is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
+            if not password:
+                return Response({'error': 'Password is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
+
+            username = mobile_number
 
             if User.objects.filter(username=username).exists():
-                return Response({'error': 'A user with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'A user with this mobile number already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
             # Create User
             user = User.objects.create(
                 username=username,
-                email=data.get('email'),
-                first_name=data.get('personalName'),
+                email=data.get('email', ''),
+                first_name=data.get('personal_name', ''),
                 role='SUPPLIER',
                 is_active=False # Pending approval
             )
-            # We don't have a password in formData yet. 
-            # The Supplier onboarding doesn't seem to ask for a password?
-            # Wait, how will they login? 
-            # Brief says: "Admin manages agents... approves suppliers...".
-            # Maybe the password is set after approval or provided by admin.
-            # But the current Login.tsx doesn't have a password field in Supplier Onboarding.
             
-            # Let's add a placeholder password or generate one
-            user.set_unusable_password() 
+            user.set_password(password)
             user.save()
 
+            # Files are handled by DRF in request.FILES or request.data depending on configuration, 
+            # for multipart/form-data both can be accessed via request.data or request.FILES.
+            # We'll check request.FILES explicitly just in case.
+            files = request.FILES
+            
             # Create Supplier
             supplier = Supplier.objects.create(
                 user=user,
-                company_name=data.get('companyName'),
-                personal_name=data.get('personalName'),
+                company_name=data.get('company_name'),
+                personal_name=data.get('personal_name'),
                 designation=data.get('designation'),
-                mobile_number=data.get('mobileNumber'),
-                telephone_number=data.get('telephoneNumber'),
+                mobile_number=data.get('mobile_number'),
+                telephone_number=data.get('telephone_number'),
                 email=data.get('email'),
                 address=data.get('address'),
                 city=data.get('city'),
                 state=data.get('state'),
-                pin_code=data.get('pinCode'),
+                pin_code=data.get('pin_code'),
                 country=data.get('country'),
                 website=data.get('website'),
-                business_category=data.get('businessCategory'),
-                iec_code=data.get('iecCode'),
-                gst_number=data.get('gstNumber'),
-                pan_number=data.get('panNumber'),
-                turnover_2y=data.get('turnover2y'),
+                business_category=data.get('business_category'),
+                iec_code=data.get('iec_code'),
+                gst_number=data.get('gst_number'),
+                pan_number=data.get('pan_number'),
+                turnover_2y=data.get('turnover_2y'),
+                
+                # Bank Details
+                account_name=data.get('account_name'),
+                account_number=data.get('account_number'),
+                branch=data.get('branch'),
+                ifsc_code=data.get('ifsc_code'),
+                
+                # Files
+                brochure_file=files.get('brochure_file') or data.get('brochure_file'),
+                payment_screenshot=files.get('payment_screenshot') or data.get('payment_screenshot'),
+                
+                # Relations
+                associate_partner=data.get('associate_partner'),
+                
                 status='PENDING'
             )
             
@@ -145,9 +179,12 @@ class BuyerViewSet(viewsets.ModelViewSet):
         if user.role == 'ADMIN':
             return Buyer.objects.all()
         if user.role == 'AGENT':
-            # Agents see buyers assigned to them OR buyers they created 
-            # (Admins can see everything)
-            return Buyer.objects.filter(models.Q(assigned_agent=user) | models.Q(created_by=user))
+            # Agents see buyers assigned to them 
+            # OR buyers they created that haven't been assigned to anyone else yet
+            return Buyer.objects.filter(
+                Q(assigned_agent=user) | 
+                (Q(assigned_agent__isnull=True) & Q(created_by=user))
+            )
         if user.role in ['SUPPLIER', 'PARTNER']:
             # Both see all buyers (serializers handle masking)
             return Buyer.objects.all()
@@ -155,6 +192,23 @@ class BuyerViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         return [permissions.IsAuthenticated()]
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        user = request.user
+        if user.role == 'ADMIN':
+            return
+        
+        # Suppliers and Partners can ONLY read
+        if user.role in ['SUPPLIER', 'PARTNER'] and request.method not in permissions.SAFE_METHODS:
+            self.permission_denied(request, message="You do not have permission to modify buyers.")
+            
+        # Agents can only modify buyers they created or are assigned to
+        if user.role == 'AGENT' and request.method not in permissions.SAFE_METHODS:
+            is_creator = obj.created_by == user
+            is_assigned = obj.assigned_agent == user
+            if not (is_creator or is_assigned):
+                self.permission_denied(request, message="You can only modify buyers you created or are assigned to.")
 
     def perform_create(self, serializer):
         buyer = serializer.save(created_by=self.request.user)

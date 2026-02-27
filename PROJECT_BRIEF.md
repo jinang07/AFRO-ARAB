@@ -72,8 +72,14 @@ AABA_FINAL/
 
 ---
 
-## 6. Recent Changes & Cleanup
+## 6. Recent Features & Security Enhancements
+- **Lead Visibility & Search**: Implemented role-based lead visibility and added searching by detailed product requirements in the Buyer Registry.
+- **Data Deletion & Integrity**: Added a reusable `ConfirmationModal` for all deletion actions. Fixed ID type mismatches between frontend and backend to enable reliable record deletion.
+- **Security Logic (IDOR Fix)**: Implemented backend object-level permission checks. Agents can only modify leads they created or are assigned to.
+- **Restricted Fields**: Secured sensitive data fields (e.g., `assigned_agent`) to be modifiable only by Administrators.
+- **Admin Visibility**: Enhanced the Buyer Registry to show assigned agent names next to corporate entities for Admin users.
+
+## 7. Project Cleanup & Migration
 - **Restructuring:** Segregated frontend and backend into dedicated top-level directories.
 - **Database:** Migrated fully from SQLite to PostgreSQL; all local `.sqlite3` files removed.
-- **Cleanup:** Deleted redundant `node_modules_old`, `migrated_prompt_history`, and build artifacts.
 - **Mobile Prep:** Configured Capacitor for Android deployment.

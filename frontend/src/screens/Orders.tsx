@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Order, OrderStatus } from '../types';
 import { api } from '../services/api';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const FULL_LIFECYCLE: OrderStatus[] = [
   'QUOTATION_SENT',
@@ -41,6 +42,10 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; orderId: string | null }>({
+    isOpen: false,
+    orderId: null
+  });
 
   // Data for selects
   const [agents, setAgents] = useState<any[]>([]);
@@ -147,17 +152,14 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: number) => {
-    e.stopPropagation();
-    if (!isAdmin) return;
-    if (confirm('Delete this order permanently?')) {
-      try {
-        await api.delete(`/orders/${id}/`);
-        fetchOrders();
-        if (selectedOrder?.id === id) setSelectedOrder(null);
-      } catch (err) {
-        alert('Failed to delete order');
-      }
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/orders/${id}/`);
+      fetchOrders();
+      if (selectedOrder?.id === id) setSelectedOrder(null);
+      setDeleteConfirmation({ isOpen: false, orderId: null });
+    } catch (err) {
+      alert('Failed to delete order');
     }
   };
 
@@ -249,7 +251,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                         <i className="fa-solid fa-pen-nib text-xs"></i>
                       </button>
                       {isAdmin && (
-                        <button onClick={(e) => handleDelete(e, order.id)} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
+                        <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmation({ isOpen: true, orderId: order.id }); }} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
                           <i className="fa-solid fa-trash-can text-xs"></i>
                         </button>
                       )}
@@ -420,34 +422,36 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Expected Delivery Date</label>
-                  <input type="date" value={formData.expectedDeliveryDate} onChange={e => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Supplier Entity</label>
+                    <select
+                      required
+                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
+                      value={formData.supplier}
+                      onChange={e => setFormData({ ...formData, supplier: e.target.value })}
+                    >
+                      <option value="">Select Supplier</option>
+                      {suppliers.map(s => <option key={s.id} value={s.id}>{s.companyName}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Customer / Buyer</label>
+                    <select
+                      required
+                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
+                      value={formData.buyer}
+                      onChange={e => setFormData({ ...formData, buyer: e.target.value })}
+                    >
+                      <option value="">Select Customer</option>
+                      {buyers.map(b => <option key={b.id} value={b.id}>{b.companyName}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Supplier Entity</label>
-                  <select
-                    required
-                    className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
-                    value={formData.supplier}
-                    onChange={e => setFormData({ ...formData, supplier: e.target.value })}
-                  >
-                    <option value="">Select Supplier</option>
-                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.companyName}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Customer / Buyer</label>
-                  <select
-                    required
-                    className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
-                    value={formData.buyer}
-                    onChange={e => setFormData({ ...formData, buyer: e.target.value })}
-                  >
-                    <option value="">Select Customer</option>
-                    {buyers.map(b => <option key={b.id} value={b.id}>{b.companyName}</option>)}
-                  </select>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Expected Delivery Date</label>
+                  <input type="date" value={formData.expectedDeliveryDate} onChange={e => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none" />
                 </div>
 
                 <button type="submit" className="w-full py-5 bg-[#224194] text-white rounded-[1.5rem] font-black uppercase tracking-[0.15em] text-xs shadow-xl shadow-[#224194]/20 active:scale-95 transition-all mt-6">
@@ -458,6 +462,15 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        title="Delete Order"
+        message="Are you sure you want to permanently remove this order? This action cannot be undone."
+        confirmLabel="Delete Order"
+        onConfirm={() => deleteConfirmation.orderId && handleDelete(deleteConfirmation.orderId)}
+        onCancel={() => setDeleteConfirmation({ isOpen: false, orderId: null })}
+      />
     </div>
   );
 };

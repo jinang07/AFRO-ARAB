@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Supplier, AccountStatus } from '../types';
 import { api } from '../services/api';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const Suppliers: React.FC<{ user: User }> = ({ user }) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -12,14 +13,27 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; supplierId: string | null }>({
+    isOpen: false,
+    supplierId: null
+  });
+  const [vettingConfirmation, setVettingConfirmation] = useState<{ isOpen: boolean; supplierId: string | null; decision: AccountStatus | null }>({
+    isOpen: false,
+    supplierId: null,
+    decision: null
+  });
 
   const [formData, setFormData] = useState<Partial<Supplier>>({
     companyName: '', personalName: '', designation: '', mobileNumber: '',
     email: '', address: '', city: '', state: '',
     pinCode: '', country: 'India', website: '', businessCategory: '',
     iecCode: '', gstNumber: '', panNumber: '', turnover2y: '',
+    associatePartner: '',
     products: []
   });
+
+  const [brochureFile, setBrochureFile] = useState<File | null>(null);
+  const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
 
   const isAdmin = user.role === 'ADMIN';
   const isAgent = user.role === 'AGENT';
@@ -46,10 +60,25 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const submitData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          // Convert array to string or append individually? 
+          // products is an array, skipping for now as it's not in the main model.
+          if (key !== 'products') {
+            const snakeKey = key.replace(/([a-z])([A-Z0-9])/g, '$1_$2').toLowerCase();
+            submitData.append(snakeKey, value as string);
+          }
+        }
+      });
+      if (brochureFile) submitData.append('brochure_file', brochureFile);
+      if (paymentScreenshot) submitData.append('payment_screenshot', paymentScreenshot);
+
       if (editingSupplier) {
-        await api.put(`/suppliers/${editingSupplier.id}/`, formData);
+        await api.put(`/suppliers/${editingSupplier.id}/`, submitData);
       } else {
-        await api.post('/suppliers/', { ...formData, status: 'APPROVED' });
+        submitData.append('status', 'APPROVED');
+        await api.post('/suppliers/', submitData);
       }
       fetchSuppliers();
       setIsModalOpen(false);
@@ -58,28 +87,28 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Delete this supplier record?')) return;
+  const handleDelete = async (id: string) => {
     try {
       await api.delete(`/suppliers/${id}/`);
       fetchSuppliers();
+      setDeleteConfirmation({ isOpen: false, supplierId: null });
     } catch (err) {
       alert('Failed to delete supplier');
     }
   };
 
-  const handleVettingDecision = async (id: number, newStatus: AccountStatus) => {
-    if (!confirm(`Confirm ${newStatus.toLowerCase()} decision?`)) return;
+  const handleVettingDecision = async (id: string, newStatus: AccountStatus) => {
     try {
       await api.patch(`/suppliers/${id}/`, { status: newStatus });
       fetchSuppliers();
+      setVettingConfirmation({ isOpen: false, supplierId: null, decision: null });
     } catch (err) {
       alert('Failed to update status');
     }
   };
 
   const filtered = suppliers.filter(s =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.companyName || s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     (s.country || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -159,7 +188,7 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                           <i className="fa-solid fa-pen text-[10px]"></i>
                         </button>
                         {isAdmin && (
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(supplier.id); }} className="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center">
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmation({ isOpen: true, supplierId: supplier.id }); }} className="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center">
                             <i className="fa-solid fa-trash text-[10px]"></i>
                           </button>
                         )}
@@ -202,7 +231,8 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
           {pendingSuppliers.map(reg => (
             <div
               key={reg.id}
-              className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:border-amber-200 transition-all animate-in slide-in-from-right-4"
+              onClick={() => { setViewingSupplier(reg); setIsDetailOpen(true); }}
+              className="bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:border-amber-200 transition-all animate-in slide-in-from-right-4 cursor-pointer"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-4">
@@ -219,8 +249,8 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
 
               <div className="flex items-center justify-between pt-3 border-t border-slate-50">
                 <div className="flex gap-2">
-                  <button onClick={() => handleVettingDecision(reg.id, 'REJECTED')} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase">Reject</button>
-                  <button onClick={() => handleVettingDecision(reg.id, 'APPROVED')} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">Approve</button>
+                  <button onClick={(e) => { e.stopPropagation(); setVettingConfirmation({ isOpen: true, supplierId: reg.id, decision: 'REJECTED' }); }} className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase">Reject</button>
+                  <button onClick={(e) => { e.stopPropagation(); setVettingConfirmation({ isOpen: true, supplierId: reg.id, decision: 'APPROVED' }); }} className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase">Approve</button>
                 </div>
               </div>
             </div>
@@ -302,6 +332,54 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                     <p className="text-sm font-black text-slate-900">{viewingSupplier.turnover2y}</p>
                   </div>
                 </section>
+
+                <section className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="col-span-2">
+                    <label className="text-[9px] font-black text-sky-600 uppercase tracking-[0.2em] mb-2 block">4. Bank & Financial Details</label>
+                  </div>
+                  <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100 col-span-2 md:col-span-1">
+                    <p className="text-[8px] font-black text-sky-700 uppercase mb-1">Account Name</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.accountName || 'N/A'}</p>
+                  </div>
+                  <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100 col-span-2 md:col-span-1">
+                    <p className="text-[8px] font-black text-sky-700 uppercase mb-1">Account Number</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.accountNumber || 'N/A'}</p>
+                  </div>
+                  <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100 col-span-2 md:col-span-1">
+                    <p className="text-[8px] font-black text-sky-700 uppercase mb-1">Branch</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.branch || 'N/A'}</p>
+                  </div>
+                  <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100 col-span-2 md:col-span-1">
+                    <p className="text-[8px] font-black text-sky-700 uppercase mb-1">IFSC Code</p>
+                    <p className="text-xs font-bold text-slate-900">{viewingSupplier.ifscCode || 'N/A'}</p>
+                  </div>
+                </section>
+
+                <section className="grid grid-cols-2 gap-4 mt-6">
+                  <div className="col-span-2">
+                    <label className="text-[9px] font-black text-rose-600 uppercase tracking-[0.2em] mb-2 block">5. Attached Documents</label>
+                  </div>
+                  <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 col-span-2 md:col-span-1">
+                    <p className="text-[8px] font-black text-rose-700 uppercase mb-2">Company Brochure</p>
+                    {viewingSupplier.brochureFile ? (
+                      <a href={viewingSupplier.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-xl transition-all shadow-sm">
+                        <i className="fa-solid fa-file-pdf"></i> View PDF
+                      </a>
+                    ) : (
+                      <p className="text-xs font-bold text-slate-400">Not Provided</p>
+                    )}
+                  </div>
+                  <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 col-span-2 md:col-span-1">
+                    <p className="text-[8px] font-black text-rose-700 uppercase mb-2">Payment Screenshot</p>
+                    {viewingSupplier.paymentScreenshot ? (
+                      <a href={viewingSupplier.paymentScreenshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-xl transition-all shadow-sm">
+                        <i className="fa-solid fa-image"></i> View Image
+                      </a>
+                    ) : (
+                      <p className="text-xs font-bold text-slate-400">Not Provided</p>
+                    )}
+                  </div>
+                </section>
               </div>
             </div>
           </div>
@@ -350,6 +428,48 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                       <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Designation</label>
                       <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.designation} onChange={e => setFormData({ ...formData, designation: e.target.value })} />
                     </div>
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Mobile Number</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.mobileNumber} onChange={e => setFormData({ ...formData, mobileNumber: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Email</label>
+                      <input required type="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#224194]" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] block border-b border-emerald-50 pb-2">3. Regulatory & Financials</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">IEC Code</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-600" value={formData.iecCode} onChange={e => setFormData({ ...formData, iecCode: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">PAN Number</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-600" value={formData.panNumber} onChange={e => setFormData({ ...formData, panNumber: e.target.value })} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Last 2 Year Turnover</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-600" value={formData.turnover2y} onChange={e => setFormData({ ...formData, turnover2y: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-2">
+                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] block border-b border-indigo-50 pb-2">4. Documents</label>
+                  <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 space-y-4">
+                    <div>
+                      <label className="text-[10px] font-black text-indigo-800 uppercase tracking-widest block mb-1">Company Brochure (Required PDF)</label>
+                      <input type="file" required={!editingSupplier} accept=".pdf" className="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-100 file:text-indigo-800 hover:file:bg-indigo-200 transition-all cursor-pointer" onChange={e => setBrochureFile(e.target.files ? e.target.files[0] : null)} />
+                      {editingSupplier && <p className="text-[9px] text-slate-400 font-bold mt-1">Leave blank to keep existing file.</p>}
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Payment Screenshot (Optional)</label>
+                      <input type="file" accept="image/*" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 transition-all cursor-pointer" onChange={e => setPaymentScreenshot(e.target.files ? e.target.files[0] : null)} />
+                    </div>
                   </div>
                 </div>
 
@@ -361,6 +481,25 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        title="Delete Supplier"
+        message="Are you sure you want to permanently remove this supplier record? This action cannot be undone."
+        confirmLabel="Delete Supplier"
+        onConfirm={() => deleteConfirmation.supplierId && handleDelete(deleteConfirmation.supplierId)}
+        onCancel={() => setDeleteConfirmation({ isOpen: false, supplierId: null })}
+      />
+
+      <ConfirmationModal
+        isOpen={vettingConfirmation.isOpen}
+        title={`${vettingConfirmation.decision === 'APPROVED' ? 'Approve' : 'Reject'} Supplier`}
+        message={`Are you sure you want to ${vettingConfirmation.decision?.toLowerCase()} this supplier application?`}
+        confirmLabel={vettingConfirmation.decision === 'APPROVED' ? 'Approve' : 'Reject'}
+        type={vettingConfirmation.decision === 'APPROVED' ? 'info' : 'warning'}
+        onConfirm={() => vettingConfirmation.supplierId && vettingConfirmation.decision && handleVettingDecision(vettingConfirmation.supplierId, vettingConfirmation.decision)}
+        onCancel={() => setVettingConfirmation({ isOpen: false, supplierId: null, decision: null })}
+      />
     </div>
   );
 };
