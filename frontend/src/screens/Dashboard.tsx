@@ -60,7 +60,7 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-[#224194] p-8 rounded-[3rem] text-white shadow-xl shadow-[#224194]/20 overflow-hidden relative">
         <div className="relative z-10">
-          <h2 className="text-3xl font-black mb-1">Ahlan, {(user.name || user.username).split(' ')[0]} 👋</h2>
+          <h2 className="text-3xl font-black mb-1"> Ahlan, {(user.firstName || user.name || user.username).split(' ')[0]} 👋</h2>
           <p className="text-white/60 text-sm mb-8 font-medium italic">Global trade, localized intelligence.</p>
 
           <div className="grid grid-cols-2 gap-4">
@@ -116,29 +116,9 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
         </section>
       )}
 
-      {!isPendingSupplier && !isLoading && (
-        <section>
-          <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm mb-5 px-2">Market Signals</h3>
-          <div className="space-y-3">
-            {[
-              { id: 'TX-99', title: 'Textile Demand Spiking', desc: 'West Africa region showing 40% growth', type: 'MARKET' },
-              { id: 'LOG-12', title: 'Route Optimization', desc: 'New corridor opened via Dubai port', type: 'LOGISTICS' },
-            ].map((sig) => (
-              <div key={sig.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex items-center gap-5 shadow-sm">
-                <div className="w-12 h-12 rounded-2xl bg-[#224194]/5 text-[#224194] flex items-center justify-center">
-                  <i className={`fa-solid ${sig.type === 'MARKET' ? 'fa-chart-line' : 'fa-ship'}`}></i>
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-900 text-xs uppercase tracking-tight">{sig.title}</h4>
-                  <p className="text-[10px] text-slate-500 font-medium mt-1">{sig.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 };
 
 export default Dashboard;
+

@@ -6,6 +6,7 @@ const INITIAL_PENDING: Supplier[] = [
   {
     id: 'REG-101',
     name: 'Mumbai Textile Hub',
+    companyName: 'Mumbai Textile Hub',
     personalName: 'Sanjay Varma',
     designation: 'Managing Director',
     mobile: '+91 999 888 7777',
@@ -18,13 +19,14 @@ const INITIAL_PENDING: Supplier[] = [
     category: 'Textiles',
     iecCode: 'IEC445566',
     panNumber: 'ABCDE1234F',
-    turnover: '$1.2M',
+    turnover: '₹1.2M',
     status: 'PENDING',
     products: []
   },
   {
     id: 'REG-102',
     name: 'Delhi Agrotech',
+    companyName: 'Delhi Agrotech',
     personalName: 'Anjali Sharma',
     designation: 'CEO',
     mobile: '+91 900 111 2222',
@@ -37,7 +39,7 @@ const INITIAL_PENDING: Supplier[] = [
     category: 'Agricultural Machinery',
     iecCode: 'IEC998877',
     panNumber: 'FGHIJ5678K',
-    turnover: '$800k',
+    turnover: '₹800k',
     status: 'PENDING',
     products: []
   }
@@ -59,6 +61,17 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Branding Header */}
+      <div className="flex flex-col items-center mb-10">
+        <div className="bg-white p-2 rounded-2xl shadow-sm flex items-center justify-center mb-3 w-20 h-20 border border-slate-50">
+          <img src="/logo.jpeg" alt="Logo" className="w-full h-full object-contain" />
+        </div>
+        <div className="text-center">
+          <h1 className="text-xl font-black text-[#224194] tracking-tight">AFRO ARAB</h1>
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">B2B Platform</p>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Onboarding Queue</h2>
@@ -125,21 +138,59 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
                   <div className="bg-slate-50 p-4 rounded-3xl grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Company</p>
-                      <p className="text-xs font-bold text-slate-900">{selectedReg.name}</p>
+                      <p className="text-xs font-bold text-slate-900">{selectedReg.companyName || selectedReg.name}</p>
                     </div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Category</p>
-                      <p className="text-xs font-bold text-slate-900">{selectedReg.category}</p>
+                      <p className="text-xs font-bold text-slate-900">{selectedReg.businessCategory || selectedReg.category}</p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Address</p>
-                      <p className="text-xs font-bold text-slate-900 leading-relaxed">{selectedReg.address}, {selectedReg.city}, {selectedReg.pinCode}</p>
+                      <p className="text-xs font-bold text-slate-900 leading-relaxed">{selectedReg.address}, {selectedReg.city}, {selectedReg.state}, {selectedReg.pinCode}, {selectedReg.country}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Website</p>
+                      <p className="text-xs font-bold text-blue-600 truncate">{selectedReg.website || 'N/A'}</p>
                     </div>
                   </div>
                 </section>
 
                 <section>
-                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-3 block">Regulatory Check</label>
+                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3 block">Primary Contact</label>
+                  <div className="bg-slate-50 p-4 rounded-3xl grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Name</p>
+                      <p className="text-xs font-bold text-slate-900">{selectedReg.personalName}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Designation</p>
+                      <p className="text-xs font-bold text-slate-900">{selectedReg.designation}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Mobile</p>
+                      <p className="text-xs font-bold text-slate-900">{selectedReg.mobileNumber || selectedReg.mobile}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Email</p>
+                      <p className="text-xs font-bold text-slate-900">{selectedReg.email}</p>
+                    </div>
+                    {selectedReg.telephoneNumber && (
+                      <div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Telephone</p>
+                        <p className="text-xs font-bold text-slate-900">{selectedReg.telephoneNumber}</p>
+                      </div>
+                    )}
+                    {selectedReg.associatePartner && (
+                      <div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Associate Partner</p>
+                        <p className="text-xs font-black text-indigo-600">{selectedReg.associatePartner}</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+
+                <section>
+                  <label className="text-[9px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-3 block">Regulatory & Financial Check</label>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
                       <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">IEC CODE</p>
@@ -149,23 +200,54 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
                       <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">PAN NUMBER</p>
                       <p className="text-[11px] font-mono font-black">{selectedReg.panNumber}</p>
                     </div>
-                    <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl col-span-2">
+                    {selectedReg.gstNumber && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                        <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">GST NUMBER</p>
+                        <p className="text-[11px] font-mono font-black">{selectedReg.gstNumber}</p>
+                      </div>
+                    )}
+                    <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
                       <p className="text-[8px] font-black text-emerald-700 uppercase mb-1">2Y AVG TURNOVER</p>
-                      <p className="text-xs font-black text-slate-900">{selectedReg.turnover}</p>
+                      <p className="text-xs font-black text-slate-900">{selectedReg.turnover2y || selectedReg.turnover}</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 border border-slate-100 rounded-2xl col-span-2">
+                      <p className="text-[8px] font-black text-slate-400 uppercase mb-1">Products Available</p>
+                      <p className="text-xs font-bold text-slate-900 leading-relaxed">{selectedReg.productAvailable || "None listed"}</p>
                     </div>
                   </div>
                 </section>
 
                 <section>
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Verification Documents</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="aspect-video bg-slate-100 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
-                      <i className="fa-solid fa-file-pdf text-xl mb-1"></i>
-                      <span className="text-[8px] font-black uppercase">Brochure.pdf</span>
+                  <label className="text-[9px] font-black text-[#e41e31] uppercase tracking-[0.2em] mb-3 block">4. Attached Documents</label>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="p-6 bg-rose-50/30 rounded-[2rem] border border-rose-100/50">
+                      <p className="text-[10px] font-black text-[#e41e31] uppercase tracking-widest mb-4">Company Brochure</p>
+                      {selectedReg.brochureFile ? (
+                        <a href={selectedReg.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-[#e91141] text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">
+                          <i className="fa-solid fa-file-pdf text-sm"></i>
+                          View PDF
+                        </a>
+                      ) : (
+                        <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px]">
+                          <i className="fa-solid fa-file-pdf text-sm"></i>
+                          No PDF
+                        </div>
+                      )}
                     </div>
-                    <div className="aspect-video bg-slate-100 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400">
-                      <i className="fa-solid fa-image text-xl mb-1"></i>
-                      <span className="text-[8px] font-black uppercase">Payment.jpg</span>
+
+                    <div className="p-6 bg-rose-50/30 rounded-[2rem] border border-rose-100/50">
+                      <p className="text-[10px] font-black text-[#e41e31] uppercase tracking-widest mb-4">Payment Screenshot</p>
+                      {selectedReg.paymentScreenshot ? (
+                        <a href={selectedReg.paymentScreenshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-[#e91141] text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">
+                          <i className="fa-solid fa-image text-sm"></i>
+                          View Image
+                        </a>
+                      ) : (
+                        <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px]">
+                          <i className="fa-solid fa-image text-sm"></i>
+                          No Image
+                        </div>
+                      )}
                     </div>
                   </div>
                 </section>

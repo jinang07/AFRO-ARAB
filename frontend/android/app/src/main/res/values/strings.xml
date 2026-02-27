@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Afro Arab Architect</string>
+    <string name="title_activity_main">Afro Arab Architect</string>
+    <string name="package_name">com.afroarab.app</string>
+    <string name="custom_url_scheme">com.afroarab.app</string>
+</resources>

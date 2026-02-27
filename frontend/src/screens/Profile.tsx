@@ -10,16 +10,17 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications }) => {
-  const initials = user.username ? user.username.substring(0, 2).toUpperCase() : user.name.substring(0, 2).toUpperCase();
+  const initials = (user.firstName || user.name || user.username).substring(0, 2).toUpperCase();
   const isSupplier = user.role === 'SUPPLIER';
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [supplierId, setSupplierId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(isSupplier);
   const [isNotifLoading, setIsNotifLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Business Data for Supplier
   const [businessData, setBusinessData] = useState({
-    companyName: user.name || user.username,
+    companyName: user.name || user.username || '',
     personalName: '',
     designation: '',
     mobileNumber: '',
@@ -36,7 +37,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
     gstNumber: '',
     panNumber: '',
     turnover2y: '',
-    brochureFile: ''
+    productAvailable: '',
+    brochureFile: '',
+    password: '',
+    associatePartner: ''
   });
 
   useEffect(() => {
@@ -69,7 +73,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           gstNumber: profile.gst_number || profile.gstNumber || '',
           panNumber: profile.pan_number || profile.panNumber || '',
           turnover2y: profile.turnover_2y || profile.turnover2y || '',
-          brochureFile: profile.brochure_file || profile.brochureFile || ''
+          productAvailable: profile.product_available || profile.productAvailable || '',
+          brochureFile: profile.brochure_file || profile.brochureFile || '',
+          password: '',
+          associatePartner: profile.associate_partner || profile.associatePartner || ''
         });
       }
     } catch (err) {
@@ -91,12 +98,56 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
   const handleUpdateBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (supplierId) {
-        await api.put(`/suppliers/${supplierId}/`, businessData);
-      } else {
-        await api.post('/suppliers/', { ...businessData, user: user.id });
+      // 1. Prepare raw data
+      const rawData: Record<string, any> = {
+        company_name: businessData.companyName,
+        personal_name: businessData.personalName,
+        designation: businessData.designation,
+        mobile_number: businessData.mobileNumber,
+        telephone_number: businessData.telephoneNumber,
+        email: businessData.email,
+        address: businessData.address,
+        city: businessData.city,
+        state: businessData.state,
+        pin_code: businessData.pinCode,
+        country: businessData.country,
+        website: businessData.website,
+        business_category: businessData.businessCategory,
+        iec_code: businessData.iecCode,
+        gst_number: businessData.gstNumber,
+        pan_number: businessData.panNumber,
+        turnover_2y: businessData.turnover2y,
+        product_available: businessData.productAvailable,
+        associate_partner: businessData.associatePartner
+      };
+
+      if (businessData.password) {
+        rawData.password = businessData.password;
       }
-      alert('Business profile updated! Our compliance team will review these changes shortly.');
+
+      // 2. Filter out file URL strings (backend expects actual files or null for FileFields)
+      // Since Profile.tsx currently doesn't have a file picker for the brochure in the edit modal 
+      // (it just shows the URL/path in an input), we should avoid sending it if it hasn't changed
+      // or if it's just a string URL.
+      if (typeof businessData.brochureFile === 'string' && businessData.brochureFile.startsWith('http')) {
+        delete rawData.brochure_file;
+      } else if (businessData.brochureFile) {
+        rawData.brochure_file = businessData.brochureFile;
+      }
+
+      // 3. Clean empty strings for optional fields to avoid backend validation issues
+      Object.keys(rawData).forEach(key => {
+        if (rawData[key] === '') {
+          rawData[key] = null;
+        }
+      });
+
+      if (supplierId) {
+        await api.put(`/suppliers/${supplierId}/`, rawData);
+      } else {
+        await api.post('/suppliers/', { ...rawData, user: user.id });
+      }
+      alert('Business profile updated successfully!');
       setIsEditModalOpen(false);
       fetchSupplierProfile();
     } catch (err) {
@@ -106,6 +157,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
   };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  const sortedNotifications = [...notifications].sort((a, b) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -124,7 +179,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <div className="absolute bottom-[-5px] right-[-5px] w-8 h-8 bg-emerald-500 border-4 border-white rounded-full"></div>
         </div>
 
-        <h2 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tight">{user.name || user.username}</h2>
+        <h2 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tight">{user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.name || user.username}</h2>
         <p className="text-slate-500 text-sm font-medium mb-4">{user.email}</p>
 
         <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${user.role === 'ADMIN' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-[#224194]/10 text-[#224194] border-blue-200'
@@ -147,18 +202,18 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
             </div>
           </div>
           {unreadCount > 0 && (
-            <button onClick={markAsRead} className="text-[9px] font-black text-[#224194] uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl">Clear All</button>
+            <button onClick={markAsRead} className="text-[9px] font-black text-[#224194] uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl">Mark all as read</button>
           )}
         </div>
         <div className="max-h-64 overflow-y-auto no-scrollbar">
-          {notifications.length > 0 ? (
-            notifications.map(n => (
+          {sortedNotifications.length > 0 ? (
+            sortedNotifications.map(n => (
               <div key={n.id} className={`p-4 border-b border-slate-50 flex gap-4 items-start ${!n.is_read ? 'bg-blue-50/30' : ''}`}>
                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.type === 'SUCCESS' ? 'bg-emerald-500' : n.type === 'WARNING' ? 'bg-amber-500' : 'bg-[#224194]'}`}></div>
                 <div>
                   <p className="text-xs text-slate-700 font-bold leading-relaxed">{n.message}</p>
                   <p className="text-[8px] font-black text-slate-400 uppercase mt-1 tracking-tighter">
-                    {new Date(n.created_at).toLocaleString()}
+                    {n.created_at ? new Date(n.created_at).toLocaleString() : 'Just now'}
                   </p>
                 </div>
               </div>
@@ -171,6 +226,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           )}
         </div>
       </div>
+
 
       {isSupplier && (
         <div className="bg-[#224194] p-8 rounded-[3rem] text-white shadow-xl shadow-[#224194]/20 space-y-4">
@@ -196,6 +252,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
               <div className="bg-white/10 p-4 rounded-2xl border border-white/20">
                 <p className="text-[8px] font-black uppercase text-blue-200 mb-1">PAN Number</p>
                 <p className="text-xs font-black">{businessData.panNumber || 'NOT SET'}</p>
+              </div>
+              <div className="col-span-2 bg-white/10 p-4 rounded-2xl border border-white/20">
+                <p className="text-[8px] font-black uppercase text-blue-200 mb-1">Products Available</p>
+                <p className="text-xs font-black leading-relaxed">{businessData.productAvailable || 'NOT SET'}</p>
               </div>
               <div className="col-span-2 bg-white/10 p-4 rounded-2xl border border-white/20 flex items-center justify-between">
                 <div>
@@ -283,34 +343,60 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                       <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Annual Turnover (2Y Avg)</label>
                       <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.turnover2y} onChange={e => setBusinessData({ ...businessData, turnover2y: e.target.value })} />
                     </div>
+                    <div className="col-span-2">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Products Available</label>
+                      <textarea className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold h-24 resize-none" value={businessData.productAvailable} onChange={e => setBusinessData({ ...businessData, productAvailable: e.target.value })} />
+                    </div>
+                    <div className="col-span-2 relative">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Change Password (Leave blank to keep current)</label>
+                      <div className="relative">
+                        <input type={showPassword ? "text" : "password"} placeholder="New password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold pr-12" value={businessData.password} onChange={e => setBusinessData({ ...businessData, password: e.target.value })} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#224194] transition-all">
+                          <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Section: Documentation */}
                 <div className="space-y-4 pt-2">
-                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] block border-b border-indigo-50 pb-2">3. Corporate Assets</label>
+                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] block border-b border-indigo-50 pb-2">3. Corporate Assets & Location</label>
                   <div>
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Brochure URL (PDF)</label>
                     <input className="w-full bg-indigo-50/30 border border-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold" value={businessData.brochureFile} onChange={e => setBusinessData({ ...businessData, brochureFile: e.target.value })} />
                   </div>
-                </div>
 
-                <div className="space-y-4 pt-2">
-                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] block border-b border-indigo-50 pb-2">Location Information</label>
+                  <div className="col-span-2">
+                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Company Address</label>
+                    <textarea required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold h-20 resize-none" value={businessData.address} onChange={e => setBusinessData({ ...businessData, address: e.target.value })} />
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Country</label>
-                      <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.country} onChange={e => setBusinessData({ ...businessData, country: e.target.value })} />
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.country} onChange={e => setBusinessData({ ...businessData, country: e.target.value })} />
                     </div>
                     <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">State</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.state} onChange={e => setBusinessData({ ...businessData, state: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
                       <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">City</label>
-                      <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.city} onChange={e => setBusinessData({ ...businessData, city: e.target.value })} />
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.city} onChange={e => setBusinessData({ ...businessData, city: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Pin Code</label>
+                      <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold" value={businessData.pinCode} onChange={e => setBusinessData({ ...businessData, pinCode: e.target.value })} />
                     </div>
                   </div>
                 </div>
 
                 <button type="submit" className="w-full py-5 bg-[#224194] text-white rounded-[2rem] font-black uppercase tracking-[0.15em] text-xs shadow-xl shadow-[#224194]/100/30 active:scale-95 transition-all mt-6">
-                  Submit for Verification
+                  Save All Changes
                 </button>
               </form>
             </div>

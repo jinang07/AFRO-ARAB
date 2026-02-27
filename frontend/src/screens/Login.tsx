@@ -22,11 +22,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
   const [showPartnerConfirmPassword, setShowPartnerConfirmPassword] = useState(false);
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [regStep, setRegStep] = useState(1);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '', personalName: '', designation: '', mobileNumber: '',
     telephoneNumber: '', email: '', address: '', city: '', state: '',
     pinCode: '', country: '', website: '', businessCategory: '',
     iecCode: '', gstNumber: '', panNumber: '', turnover2y: '',
+    productAvailable: '',
     accountName: 'Afro Arab Business Association', accountNumber: '50200111853466',
     branch: 'Ring Road - Surat', ifscCode: 'HDFC0000251',
     associatePartner: '', regPassword: ''
@@ -75,7 +77,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
       if (paymentScreenshot) submitData.append('payment_screenshot', paymentScreenshot);
 
       await api.post('/suppliers/register/', submitData);
-      alert('Registration submitted successfully! Your request has been sent to the admin for checking details and payment screenshot. You cannot login until the admin approves.');
+      setShowSuccessModal(true);
       setIsRegistering(false);
       setSelectionMode(true);
       setRegStep(1);
@@ -142,12 +144,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                     <input placeholder="Telephone (Optional)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.telephoneNumber} onChange={e => setFormData({ ...formData, telephoneNumber: e.target.value })} />
                   </div>
                   <input required type="email" placeholder="Email Address" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                  <div className="relative">
-                    <input required type={showRegPassword ? "text" : "password"} placeholder="Set Password (Login Credential)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.regPassword} onChange={e => setFormData({ ...formData, regPassword: e.target.value })} />
-                    <button type="button" onClick={() => setShowRegPassword(!showRegPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      <i className={`fa-solid ${showRegPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                    </button>
-                    <p className="text-[9px] text-slate-400 font-bold ml-1 mt-1 uppercase tracking-tighter">Your mobile number and this password will be your login credentials</p>
+                  <div>
+                    <div className="relative">
+                      <input required type={showRegPassword ? "text" : "password"} placeholder="Set Password (Login Credential)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.regPassword} onChange={e => setFormData({ ...formData, regPassword: e.target.value })} />
+                      <button type="button" onClick={() => setShowRegPassword(!showRegPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-all">
+                        <i className={`fa-solid ${showRegPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                      </button>
+                    </div>
+                    <p className="text-[9px] text-slate-400 font-black ml-1 mt-1.5 uppercase tracking-widest opacity-60">Your mobile number and this password will be your login credentials</p>
                   </div>
 
                   <div className="pt-2">
@@ -183,6 +187,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                   </div>
                   <input required placeholder="PAN Number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.panNumber} onChange={e => setFormData({ ...formData, panNumber: e.target.value })} />
                   <input required placeholder="Last 2 Year Turnover" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.turnover2y} onChange={e => setFormData({ ...formData, turnover2y: e.target.value })} />
+                  <textarea required placeholder="Products Available (separate by comma)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 h-24 resize-none focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.productAvailable} onChange={e => setFormData({ ...formData, productAvailable: e.target.value })} />
                 </div>
               )}
 
@@ -286,6 +291,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
         <div className="bg-white p-6 rounded-[2.5rem] shadow-xl flex items-center justify-center mb-2 w-48 h-40 transform hover:scale-105 transition-transform duration-500 overflow-hidden">
           <img src="/logo.jpeg" alt="AFRO ARAB Logo" className="w-full h-full object-contain" />
         </div>
+        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.4em] animate-in fade-in slide-in-from-bottom duration-1000 delay-300">globally connected</p>
       </div>
 
       {/* Access Portal Card */}
@@ -443,6 +449,39 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
           )}
         </div>
       </div>
+
+      {/* Registration Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-sm rounded-[3rem] p-8 shadow-2xl scale-in-center overflow-hidden relative">
+            {/* Soft background glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#f49022]/10 blur-3xl -mr-16 -mt-16"></div>
+
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 shadow-inner animate-bounce duration-1000">
+                <i className="fa-solid fa-cloud-arrow-up text-3xl text-emerald-500"></i>
+              </div>
+
+              <h3 className="text-xl font-black text-slate-900 leading-tight mb-4 uppercase tracking-tight">
+                Submission<br />Successful!
+              </h3>
+
+              <div className="bg-slate-50 p-5 rounded-3xl mb-8 border border-slate-100">
+                <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                  Your request has been sent to the admin for verification. You cannot login until your profile & payment screenshot are approved.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-4 bg-[#224194] hover:bg-blue-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-blue-900/20 active:scale-95 transition-all"
+              >
+                Acknowledge & Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

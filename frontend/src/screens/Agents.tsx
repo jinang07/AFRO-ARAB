@@ -8,7 +8,7 @@ const Agents: React.FC<{ user: User }> = ({ user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<User | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [revealedPasswords, setRevealedPasswords] = useState<Record<number, boolean>>({});
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string | number, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   // Form State
@@ -55,7 +55,7 @@ const Agents: React.FC<{ user: User }> = ({ user }) => {
     );
   }
 
-  const toggleRevealPassword = (id: number) => {
+  const toggleRevealPassword = (id: string | number) => {
     setRevealedPasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -124,7 +124,7 @@ const Agents: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string | number) => {
     const label = currentTab === 'AGENT' ? 'agent' : 'partner';
     if (confirm(`Permanently deactivate and remove this ${label}'s access?`)) {
       try {

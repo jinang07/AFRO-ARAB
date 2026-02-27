@@ -15,6 +15,11 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
     isOpen: false,
     buyerId: null
   });
+  const [quoteConfirmation, setQuoteConfirmation] = useState<{ isOpen: boolean; buyerId: string | null; buyerName: string }>({
+    isOpen: false,
+    buyerId: null,
+    buyerName: ''
+  });
 
   const initialFormData: Partial<Buyer> = {
     name: '',
@@ -98,6 +103,16 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
       setDeleteConfirmation({ isOpen: false, buyerId: null });
     } catch (err) {
       alert('Failed to delete buyer');
+    }
+  };
+
+  const handleQuoteSubmit = async (id: string) => {
+    try {
+      await api.post(`/buyers/${id}/submit_quote/`, {});
+      alert('Your quote interest has been submitted! The administrator has been notified and will contact you shortly.');
+      setQuoteConfirmation({ isOpen: false, buyerId: null, buyerName: '' });
+    } catch (err) {
+      alert('Failed to submit quote interest.');
     }
   };
 
@@ -260,7 +275,10 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
 
             {isSupplier && (
               <div className="flex gap-2 mt-2">
-                <button className="flex-1 bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setQuoteConfirmation({ isOpen: true, buyerId: buyer.id, buyerName: buyer.companyName })}
+                  className="flex-1 bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-slate-900/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                >
                   <i className="fa-solid fa-file-contract text-blue-400"></i>
                   Submit Official Quote
                 </button>
@@ -339,7 +357,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                   <div>
                     <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">2Y Annual Turnover</label>
-                    <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#2e9782] outline-none" value={formData.turnover2y} onChange={e => setFormData({ ...formData, turnover2y: e.target.value })} placeholder="e.g. $25M" />
+                    <input required className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#2e9782] outline-none" value={formData.turnover2y} onChange={e => setFormData({ ...formData, turnover2y: e.target.value })} placeholder="e.g. ₹25Cr" />
                   </div>
                 </div>
 
@@ -382,7 +400,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Target Price (Optional)</label>
-                      <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#2e9782] outline-none" value={formData.targetPrice} onChange={e => setFormData({ ...formData, targetPrice: e.target.value })} placeholder="e.g. $450/Unit" />
+                      <input className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-[#2e9782] outline-none" value={formData.targetPrice} onChange={e => setFormData({ ...formData, targetPrice: e.target.value })} placeholder="e.g. ₹450/Unit" />
                     </div>
                     <div>
                       <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Certifications (Optional)</label>
@@ -425,6 +443,14 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
         confirmLabel="Delete Buyer"
         onConfirm={() => deleteConfirmation.buyerId && handleDelete(deleteConfirmation.buyerId)}
         onCancel={() => setDeleteConfirmation({ isOpen: false, buyerId: null })}
+      />
+      <ConfirmationModal
+        isOpen={quoteConfirmation.isOpen}
+        title="Submit Official Quote"
+        message={`Are you sure you want to submit a formal quote interest for ${quoteConfirmation.buyerName}? This will notify our regional administrators who will facilitate the transaction flow.`}
+        confirmLabel="Confirm Submission"
+        onConfirm={() => quoteConfirmation.buyerId && handleQuoteSubmit(quoteConfirmation.buyerId)}
+        onCancel={() => setQuoteConfirmation({ isOpen: false, buyerId: null, buyerName: '' })}
       />
     </div>
   );

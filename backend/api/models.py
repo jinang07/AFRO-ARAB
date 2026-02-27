@@ -49,6 +49,7 @@ class Supplier(models.Model):
     
     # Business Info
     business_category = models.CharField(max_length=255, null=True, blank=True)
+    product_available = models.TextField(null=True, blank=True)
     iec_code = models.CharField(max_length=50, null=True, blank=True)
     gst_number = models.CharField(max_length=50, null=True, blank=True)
     pan_number = models.CharField(max_length=50, null=True, blank=True)
@@ -106,10 +107,10 @@ class Buyer(models.Model):
 class Order(models.Model):
     STATUS_CHOICES = (
         ('QUOTATION_SENT', 'Quotation Sent'),
-        ('QUOTATION_APPROVED', 'Quotation Approved'),
+        ('QUOTATION_APPROVED', 'Approved'),
         ('MOU_SIGN', 'MOU Sign'),
-        ('POST_QUOTATION_FOLLOW_UPS', 'Post Quotation Follow ups'),
-        ('ORDER_CONFIRMED', 'Order Confirmed'),
+        ('POST_QUOTATION_FOLLOW_UPS', 'Follow-ups'),
+        ('ORDER_CONFIRMED', 'Confirmed'),
         ('PROCESSING', 'Processing'),
         ('SHIPPED', 'Shipped'),
         ('DELIVERED', 'Delivered'),

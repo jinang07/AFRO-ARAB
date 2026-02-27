@@ -26,8 +26,8 @@ export interface User {
   id: string;
   username: string;
   name?: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   role: Role;
   email: string;
   phoneNumber?: string;
@@ -88,16 +88,18 @@ export interface Supplier {
   panNumber?: string;
   turnover?: string; // Alias for turnover2y
   turnover2y?: string;
+  productAvailable?: string;
+  password?: string;
   associatePartner?: string; // Username of the partner
   brochureFile?: string;
   paymentScreenshot?: string;
-  status?: AccountStatus;
-  createdAt?: string;
-  products?: any[];
   accountName?: string;
   accountNumber?: string;
   branch?: string;
   ifscCode?: string;
+  status?: AccountStatus;
+  createdAt?: string;
+  products?: any[];
 }
 
 export interface Buyer {

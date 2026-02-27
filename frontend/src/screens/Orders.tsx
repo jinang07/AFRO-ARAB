@@ -20,10 +20,10 @@ const FULL_LIFECYCLE: OrderStatus[] = [
 
 const STAGE_LABELS: Record<OrderStatus, string> = {
   'QUOTATION_SENT': 'Quotation Sent',
-  'QUOTATION_APPROVED': 'Quotation Approved',
+  'QUOTATION_APPROVED': 'Approved',
   'MOU_SIGN': 'MOU Sign',
-  'POST_QUOTATION_FOLLOW_UPS': 'Post Quotation Follow ups',
-  'ORDER_CONFIRMED': 'Order Confirmed',
+  'POST_QUOTATION_FOLLOW_UPS': 'Follow-ups',
+  'ORDER_CONFIRMED': 'Confirmed',
   'PROCESSING': 'Processing',
   'SHIPPED': 'Shipped',
   'DELIVERED': 'Delivered',
@@ -32,7 +32,7 @@ const STAGE_LABELS: Record<OrderStatus, string> = {
   'COMMISSION_RECEIVED': 'Commission Received',
   'ORDER_COMPLETED': 'Order Completed',
   'CANCELLED': 'Cancelled',
-  'FOLLOW_UPS': 'Follow up',
+  'FOLLOW_UPS': 'Follow-ups',
   'CONFIRMED': 'Confirmed'
 };
 
@@ -46,12 +46,14 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
     isOpen: false,
     orderId: null
   });
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Data for selects
   const [agents, setAgents] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [buyers, setBuyers] = useState<any[]>([]);
 
+  const [currentTab, setCurrentTab] = useState<'Active' | 'Archive'>('Active');
   const [formData, setFormData] = useState({
     productName: '',
     quantity: '',
@@ -113,7 +115,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
   };
 
   const getVisibleStages = () => {
-    if (isAdmin) return FULL_LIFECYCLE;
+    if (isAdmin || isAgent) return FULL_LIFECYCLE;
     return FULL_LIFECYCLE.filter(s => s !== 'COMMISSION_RECEIVED');
   };
 
@@ -196,6 +198,22 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
+  const filteredOrders = orders.filter(o => {
+    const matchesTab = currentTab === 'Active' ? o.status !== 'ORDER_COMPLETED' : o.status === 'ORDER_COMPLETED';
+    if (!matchesTab) return false;
+
+    const searchStr = searchTerm.toLowerCase();
+    const orderId = (o.readableId || `ORD-${o.id}`).toLowerCase();
+    const productName = (o.productName || '').toLowerCase();
+    const supplierName = (o.supplierName || '').toLowerCase();
+    const buyerName = (o.buyerName || '').toLowerCase();
+
+    return orderId.includes(searchStr) ||
+      productName.includes(searchStr) ||
+      supplierName.includes(searchStr) ||
+      buyerName.includes(searchStr);
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -212,10 +230,10 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
             {isSupplier ? 'Contract Archive' : 'Order Hub'}
           </h2>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-            {isAgent ? `Account Managed by ${user.username}` : isSupplier ? `Supplier Entity: ${user.username}` : 'Global Fulfillment Lifecycle'}
+            {isAgent ? `Account Managed by ${user.firstName || user.name || user.username}` : isSupplier ? `Supplier Entity: ${user.name || user.username}` : 'Global Fulfillment Lifecycle'}
           </p>
         </div>
-        {(isAdmin || isAgent) && (
+        {isAdmin && (
           <button
             onClick={openAddModal}
             className="bg-[#224194] text-white px-4 py-2 rounded-2xl text-xs font-bold shadow-lg shadow-[#224194]/20 flex items-center gap-2 active:scale-95 transition-all"
@@ -225,20 +243,46 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
         )}
       </div>
 
+      <div className="relative">
+        <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input
+          type="text"
+          placeholder="Search by ID, product, supplier or buyer..."
+          className="w-full pl-12 pr-4 py-4 bg-white rounded-3xl border border-slate-100 shadow-sm focus:ring-2 focus:ring-[#224194] outline-none transition-all text-sm font-medium"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="flex p-1 bg-slate-100 rounded-2xl border border-slate-200">
+        <button
+          onClick={() => setCurrentTab('Active')}
+          className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${currentTab === 'Active' ? 'bg-white text-[#224194] shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          Active Hub ({orders.filter(o => o.status !== 'ORDER_COMPLETED').length})
+        </button>
+        <button
+          onClick={() => setCurrentTab('Archive')}
+          className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${currentTab === 'Archive' ? 'bg-white text-[#224194] shadow-sm border border-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+        >
+          Order Archive ({orders.filter(o => o.status === 'ORDER_COMPLETED').length})
+        </button>
+      </div>
+
       <div className="space-y-4">
-        {orders.length > 0 ? (
-          orders.map(order => (
+        {filteredOrders.length > 0 ? (
+          filteredOrders.map(order => (
             <div
               key={order.id}
               onClick={() => setSelectedOrder(selectedOrder?.id === order.id ? null : order)}
-              className={`bg-white p-6 rounded-[2.5rem] border transition-all cursor-pointer ${selectedOrder?.id === order.id ? 'border-[#224194] ring-4 ring-[#224194]/5' : 'border-slate-100 shadow-sm'}`}
+              className={`bg-white p-6 rounded-[2.5rem] border transition-all cursor-pointer ${selectedOrder?.id === order.id ? (currentTab === 'Archive' ? 'border-[#2e9782] ring-4 ring-[#2e9782]/5' : 'border-[#224194] ring-4 ring-[#224194]/5') : 'border-slate-100 shadow-sm'}`}
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className="text-[10px] font-black text-[#224194] uppercase tracking-widest">{order.readableId || `ORD-${order.id}`}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${currentTab === 'Archive' ? 'text-[#2e9782]' : 'text-[#224194]'}`}>{order.readableId || `ORD-${order.id}`}</span>
                   <h3 className="font-bold text-slate-900 text-md mt-1">{order.productName}</h3>
                   <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
-                    Created: {new Date(order.createdAt || order.orderDate).toLocaleDateString()} • Expected: {order.expectedDeliveryDate || 'UNSET'}
+                    {currentTab === 'Archive' ? `Fulfilled on ${new Date(order.createdAt || '').toLocaleDateString()}` : `Created: ${new Date(order.createdAt || '').toLocaleDateString()} • Expected: ${order.expectedDeliveryDate || 'UNSET'}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -269,7 +313,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
               <div className="grid grid-cols-2 gap-4 mb-5 p-3 bg-slate-50 rounded-2xl border border-slate-100">
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Supplier</p>
-                  <p className="text-[11px] font-bold text-slate-900 truncate">{isSupplier ? 'Me (Secured)' : order.supplierName}</p>
+                  <p className="text-[11px] font-bold text-slate-900 truncate">
+                    {isSupplier ? 'Me (Secured)' : order.supplierName}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Customer Entity</p>
@@ -292,8 +338,8 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                   {isAdmin && (
                     <div className="text-right border-l border-slate-200 pl-3">
-                      <div className="text-xs font-black text-[#224194]">₹{order.commission || '0.00'}</div>
-                      <div className="text-[8px] text-[#224194]/60 font-bold uppercase tracking-widest">Platform Fee</div>
+                      <div className="text-xs font-black text-[#2e9782]">₹{order.commission || '0.00'}</div>
+                      <div className="text-[8px] text-[#2e9782]/60 font-bold uppercase tracking-widest">Agent Commission</div>
                     </div>
                   )}
                 </div>
@@ -329,10 +375,6 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                       );
                     })}
                   </div>
-                  <div className="mt-8 grid grid-cols-2 gap-3">
-                    <button className="py-4 bg-slate-900 text-white rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-900/10 active:scale-95 transition-all">Download Manifest</button>
-                    <button className="py-4 bg-[#f49022]/10 text-[#f49022] rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest border border-[#f49022]/20 active:scale-95 transition-all">Support Desk</button>
-                  </div>
                 </div>
               )}
             </div>
@@ -340,7 +382,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
         ) : (
           <div className="py-20 text-center bg-white rounded-[3rem] border border-dashed border-slate-200 opacity-50">
             <i className="fa-solid fa-file-invoice text-4xl mb-4 text-slate-300"></i>
-            <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Pipeline Clear</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-slate-400">
+              {searchTerm ? 'No matching orders found' : 'Pipeline Clear'}
+            </p>
           </div>
         )}
       </div>
@@ -368,7 +412,16 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                     <select
                       className="w-full bg-[#224194]/5 border border-[#224194]/10 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
                       value={formData.assignedAgent}
-                      onChange={e => setFormData({ ...formData, assignedAgent: e.target.value })}
+                      onChange={e => {
+                        const agentId = e.target.value;
+                        setFormData({
+                          ...formData,
+                          assignedAgent: agentId,
+                          buyer: (agentId && formData.buyer && !buyers.find(b => String(b.id) === formData.buyer && String(b.assignedAgent) === agentId))
+                            ? ''
+                            : formData.buyer
+                        });
+                      }}
                     >
                       <option value="">Select Responsible Agent</option>
                       {agents.map((a: any) => <option key={a.id} value={a.id}>{a.username}</option>)}
@@ -396,8 +449,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                     <input
                       required
                       value={formData.productName}
+                      disabled={isAgent}
                       onChange={e => setFormData({ ...formData, productName: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      className={`w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`}
                     />
                   </div>
                   <div>
@@ -405,8 +459,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                     <input
                       required
                       value={formData.quantity}
+                      disabled={isAgent}
                       onChange={e => setFormData({ ...formData, quantity: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#f49022] outline-none transition-all"
+                      className={`w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#f49022] outline-none transition-all ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`}
                     />
                   </div>
                 </div>
@@ -414,11 +469,11 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Contract Total (₹)</label>
-                    <input required value={formData.amount} type="number" step="0.01" onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none" />
+                    <input required value={formData.amount} disabled={isAgent} type="number" step="0.01" onChange={e => setFormData({ ...formData, amount: e.target.value })} className={`w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`} />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-[#2e9782] uppercase tracking-widest block mb-1.5 ml-1">Platform Margin (₹)</label>
-                    <input required={isAdmin} value={formData.commission} type="number" step="0.01" onChange={e => setFormData({ ...formData, commission: e.target.value })} className="w-full bg-[#2e9782]/5 border border-[#2e9782]/10 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none" />
+                    <input required={isAdmin} value={formData.commission} disabled={isAgent} type="number" step="0.01" onChange={e => setFormData({ ...formData, commission: e.target.value })} className={`w-full bg-[#2e9782]/5 border border-[#2e9782]/10 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`} />
                   </div>
                 </div>
 
@@ -427,8 +482,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Supplier Entity</label>
                     <select
                       required
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
+                      className={`w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`}
                       value={formData.supplier}
+                      disabled={isAgent}
                       onChange={e => setFormData({ ...formData, supplier: e.target.value })}
                     >
                       <option value="">Select Supplier</option>
@@ -439,19 +495,31 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Customer / Buyer</label>
                     <select
                       required
-                      className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none"
+                      className={`w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-[#224194] outline-none appearance-none ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`}
                       value={formData.buyer}
-                      onChange={e => setFormData({ ...formData, buyer: e.target.value })}
+                      disabled={isAgent && !!editingOrder}
+                      onChange={e => {
+                        const buyerId = e.target.value;
+                        const selectedBuyer = buyers.find(b => String(b.id) === buyerId);
+                        setFormData({
+                          ...formData,
+                          buyer: buyerId,
+                          assignedAgent: selectedBuyer?.assignedAgent ? String(selectedBuyer.assignedAgent) : formData.assignedAgent
+                        });
+                      }}
                     >
                       <option value="">Select Customer</option>
-                      {buyers.map(b => <option key={b.id} value={b.id}>{b.companyName}</option>)}
+                      {buyers
+                        .filter(b => !formData.assignedAgent || String(b.assignedAgent) === String(formData.assignedAgent))
+                        .map(b => <option key={b.id} value={b.id}>{b.companyName}</option>)
+                      }
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Expected Delivery Date</label>
-                  <input type="date" value={formData.expectedDeliveryDate} onChange={e => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className="w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none" />
+                  <input type="date" value={formData.expectedDeliveryDate} disabled={isAgent} onChange={e => setFormData({ ...formData, expectedDeliveryDate: e.target.value })} className={`w-full bg-slate-50 border border-slate-100 rounded-[1.25rem] px-4 py-4 text-sm font-bold outline-none ${isAgent ? 'opacity-60 cursor-not-allowed' : ''}`} />
                 </div>
 
                 <button type="submit" className="w-full py-5 bg-[#224194] text-white rounded-[1.5rem] font-black uppercase tracking-[0.15em] text-xs shadow-xl shadow-[#224194]/20 active:scale-95 transition-all mt-6">

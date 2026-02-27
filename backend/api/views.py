@@ -55,7 +55,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'ADMIN':
+        if user.role == 'ADMIN' or user.role == 'AGENT':
             return Supplier.objects.all()
         if user.role == 'PARTNER':
             # Partners see suppliers linked to them
@@ -147,6 +147,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
                 gst_number=data.get('gst_number'),
                 pan_number=data.get('pan_number'),
                 turnover_2y=data.get('turnover_2y'),
+                product_available=data.get('product_available'),
                 
                 # Bank Details
                 account_name=data.get('account_name'),
@@ -199,8 +200,8 @@ class BuyerViewSet(viewsets.ModelViewSet):
         if user.role == 'ADMIN':
             return
         
-        # Suppliers and Partners can ONLY read
-        if user.role in ['SUPPLIER', 'PARTNER'] and request.method not in permissions.SAFE_METHODS:
+        # Suppliers and Partners can ONLY read (except for submitting quote interest)
+        if user.role in ['SUPPLIER', 'PARTNER'] and request.method not in permissions.SAFE_METHODS and self.action != 'submit_quote':
             self.permission_denied(request, message="You do not have permission to modify buyers.")
             
         # Agents can only modify buyers they created or are assigned to
@@ -214,13 +215,12 @@ class BuyerViewSet(viewsets.ModelViewSet):
         buyer = serializer.save(created_by=self.request.user)
         user = self.request.user
         
-        # 1. Notify Admins if an Agent adds a buyer
-        if user.role == 'AGENT':
-            admins = User.objects.filter(role='ADMIN')
-            for admin in admins:
-                notify_user(admin, f"Agent {user.username} registered a new Buyer: {buyer.company_name}", type='INFO')
+        # 1. Notify Admins whenever a buyer is registered
+        admins = User.objects.filter(role='ADMIN')
+        for admin in admins:
+            notify_user(admin, f"New Buyer registered: {buyer.company_name} ({buyer.country}) by {user.username}", type='INFO')
         
-        # 2. Notify Agent if Admin assigns them to a new buyer
+        # 2. Notify Agent if Admin assigns them to a new buyer during creation
         if user.role == 'ADMIN' and buyer.assigned_agent:
             notify_user(buyer.assigned_agent, f"Admin assigned you to a new Buyer: {buyer.company_name} ({buyer.country})", type='SUCCESS')
 
@@ -232,6 +232,33 @@ class BuyerViewSet(viewsets.ModelViewSet):
         # 3. Notify new Agent if reassigned
         if buyer.assigned_agent and buyer.assigned_agent != old_agent:
             notify_user(buyer.assigned_agent, f"You have been assigned to Buyer: {buyer.company_name} ({buyer.country})", type='SUCCESS')
+            # 4. Notify Admins about the assignment
+            admins = User.objects.filter(role='ADMIN')
+            for admin in admins:
+                notify_user(admin, f"Buyer {buyer.company_name} assigned to Agent: {buyer.assigned_agent.username}", type='INFO')
+
+    @action(detail=True, methods=['post'])
+    def submit_quote(self, request, pk=None):
+        buyer = self.get_object()
+        user = request.user
+        
+        if user.role != 'SUPPLIER':
+            return Response({'error': 'Only suppliers can submit quotes'}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Get supplier profile
+        supplier = Supplier.objects.filter(user=user).first()
+        supplier_name = supplier.company_name if supplier else user.username
+        
+        # Notify Admins
+        admins = User.objects.filter(role='ADMIN')
+        for admin in admins:
+            notify_user(
+                admin, 
+                f"Quotation Request: Supplier '{supplier_name}' has shown interest in Buyer '{buyer.company_name}' for '{buyer.product_need}'.", 
+                type='INFO'
+            )
+            
+        return Response({'status': 'Quotation request sent to administrator'})
 
 class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
@@ -252,10 +279,30 @@ class OrderViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
+        # Auto-assign agent from buyer if not provided
+        data = self.request.data
+        buyer_id = data.get('buyer')
+        assigned_agent = data.get('assignedAgent')
+        
+        if buyer_id and not assigned_agent:
+            buyer = Buyer.objects.filter(id=buyer_id).first()
+            if buyer and buyer.assigned_agent:
+                serializer.validated_data['assigned_agent'] = buyer.assigned_agent
+
         order = serializer.save(created_by=self.request.user)
         self.send_order_notifications(order, "initialized")
 
     def perform_update(self, serializer):
+        # Ensure agent consistency if buyer is changed
+        instance = self.get_object()
+        data = self.request.data
+        buyer_id = data.get('buyer')
+        
+        if buyer_id and str(instance.buyer_id) != str(buyer_id):
+            buyer = Buyer.objects.filter(id=buyer_id).first()
+            if buyer and buyer.assigned_agent:
+                serializer.validated_data['assigned_agent'] = buyer.assigned_agent
+        
         order = serializer.save()
         self.send_order_notifications(order, f"updated to stage: {order.get_status_display()}")
 
@@ -273,6 +320,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                 partner = User.objects.filter(username=order.supplier.associate_partner).first()
                 if partner:
                     notify_user(partner, f"Linked Supplier Order {order.readable_id or order.id} has been {action_text}.", type='INFO')
+        
+        # 4. Notify Admins
+        admins = User.objects.filter(role='ADMIN')
+        for admin in admins:
+            notify_user(admin, f"Order {order.readable_id or order.id} has been {action_text}.", type='INFO')
 
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
@@ -285,3 +337,4 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_as_read(self, request):
         self.get_queryset().update(is_read=True)
         return Response({'status': 'success'})
+

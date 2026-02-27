@@ -25,9 +25,75 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class SupplierSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+    
     class Meta:
         model = Supplier
         fields = '__all__'
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        # Mobile number is used as username for suppliers
+        mobile_number = validated_data.get('mobile_number')
+        
+        # We need a user for this supplier
+        user = User.objects.filter(username=mobile_number).first()
+        if not user:
+            user = User.objects.create(
+                username=mobile_number,
+                email=validated_data.get('email', ''),
+                first_name=validated_data.get('personal_name', ''),
+                role='SUPPLIER',
+                is_active=True # Admins creating suppliers might want them active immediately
+            )
+            if password:
+                user.set_password(password)
+            else:
+                user.set_password(mobile_number) # Default password is mobile number if not provided
+            user.save()
+        
+        # Create the supplier linked to the user
+        supplier = Supplier.objects.create(user=user, **validated_data)
+        return supplier
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        # Update user password if provided
+        if password and instance.user:
+            instance.user.set_password(password)
+            instance.user.save()
+            
+        return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        
+        # Agents see masked data
+        if request and request.user.role == 'AGENT':
+            # Mask sensitive personal data
+            mask_fields = [
+                'personal_name', 'mobile_number', 'email', 'address', 
+                'telephone_number', 'account_name', 'account_number', 
+                'branch', 'ifsc_code', 'payment_screenshot'
+            ]
+            for field in mask_fields:
+                if field in ret:
+                    if field == 'personal_name':
+                        ret[field] = "Verified Contact"
+                    elif field in ['mobile_number', 'telephone_number']:
+                        ret[field] = "+91 XXXXX XXXXX"
+                    elif field == 'email':
+                        ret[field] = "verified@enterprise.com"
+                    elif field == 'address':
+                         ret[field] = "Verified Business Address"
+                    else:
+                        ret[field] = None # Hide bank details and screenshots
+            
+        return ret
 
 class BuyerSerializer(serializers.ModelSerializer):
     agent_name = serializers.ReadOnlyField(source='assigned_agent.username')
