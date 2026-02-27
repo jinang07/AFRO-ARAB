@@ -3,6 +3,16 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.afroarab.app"
     compileSdk = rootProject.ext.compileSdkVersion
+
+    signingConfigs {
+        release {
+            storeFile file("../afroarab-release-key.jks")
+            storePassword "AfroArab@2024"
+            keyAlias "afroarab"
+            keyPassword "AfroArab@2024"
+        }
+    }
+
     defaultConfig {
         applicationId "com.afroarab.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -20,6 +30,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
 }

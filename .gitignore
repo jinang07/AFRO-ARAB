@@ -26,6 +26,15 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
 
+# Android – local builds & secrets
+frontend/android/*.jks
+frontend/android/*.keystore
+frontend/android/build_error.txt
+frontend/android/gradle_error.txt
+frontend/android/jdk-*.zip
+frontend/android/jdk*/
+frontend/android/local.properties
+
 # Root
 node_modules/
 dist/
@@ -35,3 +44,7 @@ dist/
 *.njsproj
 *.sln
 *.sw?
+
+# Type-checker configs (generated)
+.pyre_configuration
+pyrightconfig.json
