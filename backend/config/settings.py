@@ -58,9 +58,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'afro_arab_db',
-        'USER': 'postgres',
+        'USER': 'afro_arab',
         'PASSWORD': 'jinang123',
-        'HOST': '127.0.0.1',
+        'HOST': '187.124.96.206',
         'PORT': '5432',
     }
 }
