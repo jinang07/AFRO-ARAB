@@ -64,6 +64,15 @@ const App: React.FC = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/notifications/mark_all_as_read/', {});
+      fetchNotifications();
+    } catch (err) {
+      console.error('Failed to mark notifications as read', err);
+    }
+  };
+
   const handleLogin = (userData: User) => {
     setUser(userData);
     setActiveScreen(AppScreen.Dashboard);
@@ -96,7 +105,7 @@ const App: React.FC = () => {
       case AppScreen.Orders: return <Orders user={user} />;
       case AppScreen.Reports: return <Reports user={user} />;
       case AppScreen.Agents: return <Agents user={user} />;
-      case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} />;
+      case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} />;
       default: return <Dashboard user={user} />;
     }
   };
@@ -107,6 +116,7 @@ const App: React.FC = () => {
         user={user}
         onLogout={handleLogout}
         unreadCount={notifications.filter(n => !n.is_read).length}
+        onMarkAllRead={markAllAsRead}
       />
 
       <main className="flex-1 overflow-y-auto p-4 w-full max-w-lg mx-auto pb-32">

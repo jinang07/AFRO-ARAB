@@ -124,13 +124,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
           <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-white/20 mb-8">
             <div className="mb-8">
               <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Supplier Onboarding</h2>
-              <p className="text-xs text-slate-500 mt-1 font-medium italic">Step {regStep} of 4 • Enterprise Verification</p>
+              <p className="text-xs text-slate-500 mt-1 font-medium italic">Step {regStep} of 3 • Enterprise Verification</p>
               <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
-                <div className="h-full bg-[#f49022] transition-all duration-500" style={{ width: `${(regStep / 4) * 100}%` }}></div>
+                <div className="h-full bg-[#f49022] transition-all duration-500" style={{ width: `${(regStep / 3) * 100}%` }}></div>
               </div>
             </div>
 
-            <form onSubmit={regStep === 4 ? handleRegisterSubmit : (e) => { e.preventDefault(); setRegStep(s => s + 1); }} className="space-y-4">
+            <form onSubmit={regStep === 3 ? handleRegisterSubmit : (e) => { e.preventDefault(); setRegStep(s => s + 1); }} className="space-y-4">
               {regStep === 1 && (
                 <div className="space-y-4 animate-in slide-in-from-right duration-300">
                   <div className="group">
@@ -188,28 +188,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                   <input required placeholder="PAN Number" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.panNumber} onChange={e => setFormData({ ...formData, panNumber: e.target.value })} />
                   <input required placeholder="Last 2 Year Turnover" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.turnover2y} onChange={e => setFormData({ ...formData, turnover2y: e.target.value })} />
                   <textarea required placeholder="Products Available (separate by comma)" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm text-slate-900 placeholder:text-slate-300 h-24 resize-none focus:ring-2 focus:ring-[#224194]/20 outline-none" value={formData.productAvailable} onChange={e => setFormData({ ...formData, productAvailable: e.target.value })} />
+
+                  <div className="pt-2">
+                    <label className="text-[10px] font-black text-blue-800 uppercase tracking-widest block mb-1.5 ml-1">Company Brochure (Required PDF)</label>
+                    <input required type="file" accept=".pdf" className="w-full bg-blue-50/50 border border-blue-100 rounded-2xl px-4 py-3 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 transition-all cursor-pointer" onChange={e => setBrochureFile(e.target.files ? e.target.files[0] : null)} />
+                  </div>
                 </div>
               )}
 
-              {regStep === 4 && (
-                <div className="space-y-4 animate-in slide-in-from-right duration-300">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Payment & Documents</label>
-
-                  <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
-                    <p className="text-[10px] font-black text-[#2e9782] uppercase tracking-[0.1em] mb-2">Registration Fee Payment Details</p>
-                    <p className="text-xs text-slate-700 mb-1"><span className="font-bold">Account Name:</span> {formData.accountName}</p>
-                    <p className="text-xs text-slate-700 mb-1"><span className="font-bold">Account Number:</span> {formData.accountNumber}</p>
-                    <p className="text-xs text-slate-700 mb-1"><span className="font-bold">Branch:</span> {formData.branch}</p>
-                    <p className="text-xs text-slate-700 mb-3"><span className="font-bold">IFSC Code:</span> {formData.ifscCode}</p>
-
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Payment Screenshot (Required Image)</label>
-                    <input required type="file" accept="image/*" className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-[#2e9782] hover:file:bg-emerald-200 transition-all cursor-pointer" onChange={e => setPaymentScreenshot(e.target.files ? e.target.files[0] : null)} />
-                  </div>
-
-                  <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-                    <label className="text-[10px] font-black text-blue-800 uppercase tracking-widest block mb-1">Company Brochure (Required PDF)</label>
-                    <input required type="file" accept=".pdf" className="w-full bg-white border border-blue-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 transition-all cursor-pointer" onChange={e => setBrochureFile(e.target.files ? e.target.files[0] : null)} />
-                  </div>
+              {showSuccessModal && (
+                <div className="bg-slate-50 p-5 rounded-3xl mb-8 border border-slate-100">
+                  <p className="text-xs text-slate-600 font-bold leading-relaxed">
+                    Your request has been sent to the admin for verification. You cannot login until your profile & documents are approved.
+                  </p>
                 </div>
               )}
 
@@ -218,7 +209,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                   <button type="button" onClick={() => setRegStep(s => s - 1)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest text-xs">Back</button>
                 )}
                 <button type="submit" disabled={isLoading} className="flex-[2] py-4 bg-[#f49022] text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all disabled:opacity-50">
-                  {isLoading ? 'Processing...' : (regStep === 4 ? 'Complete Registration' : 'Next Step')}
+                  {isLoading ? 'Processing...' : (regStep === 3 ? 'Complete Registration' : 'Next Step')}
                 </button>
               </div>
             </form>
@@ -468,7 +459,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
 
               <div className="bg-slate-50 p-5 rounded-3xl mb-8 border border-slate-100">
                 <p className="text-xs text-slate-600 font-bold leading-relaxed">
-                  Your request has been sent to the admin for verification. You cannot login until your profile & payment screenshot are approved.
+                  Your request has been sent to the admin for verification. You cannot login until your profile & documents are approved.
                 </p>
               </div>
 

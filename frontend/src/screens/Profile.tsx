@@ -7,9 +7,10 @@ interface ProfileProps {
   onLogout: () => void;
   notifications: any[];
   fetchNotifications: () => void;
+  markAllAsRead: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications }) => {
+const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications, markAllAsRead }) => {
   const initials = (user.firstName || user.name || user.username).substring(0, 2).toUpperCase();
   const isSupplier = user.role === 'SUPPLIER';
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -17,6 +18,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
   const [isLoading, setIsLoading] = useState(isSupplier);
   const [isNotifLoading, setIsNotifLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [newBrochureFile, setNewBrochureFile] = useState<File | null>(null);
 
   // Business Data for Supplier
   const [businessData, setBusinessData] = useState({
@@ -86,20 +88,13 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
     }
   };
 
-  const markAsRead = async () => {
-    try {
-      await api.post('/notifications/mark_all_as_read/', {});
-      fetchNotifications();
-    } catch (err) {
-      console.error('Failed to mark notifications as read', err);
-    }
-  };
-
   const handleUpdateBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // 1. Prepare raw data
-      const rawData: Record<string, any> = {
+      const submitData = new FormData();
+
+      // 1. Prepare explicit mapping
+      const mapping: Record<string, any> = {
         company_name: businessData.companyName,
         personal_name: businessData.personalName,
         designation: businessData.designation,
@@ -122,33 +117,30 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
       };
 
       if (businessData.password) {
-        rawData.password = businessData.password;
+        mapping.password = businessData.password;
       }
 
-      // 2. Filter out file URL strings (backend expects actual files or null for FileFields)
-      // Since Profile.tsx currently doesn't have a file picker for the brochure in the edit modal 
-      // (it just shows the URL/path in an input), we should avoid sending it if it hasn't changed
-      // or if it's just a string URL.
-      if (typeof businessData.brochureFile === 'string' && businessData.brochureFile.startsWith('http')) {
-        delete rawData.brochure_file;
-      } else if (businessData.brochureFile) {
-        rawData.brochure_file = businessData.brochureFile;
-      }
-
-      // 3. Clean empty strings for optional fields to avoid backend validation issues
-      Object.keys(rawData).forEach(key => {
-        if (rawData[key] === '') {
-          rawData[key] = null;
+      // 2. Append text fields
+      Object.keys(mapping).forEach(key => {
+        if (mapping[key] !== null && mapping[key] !== undefined && mapping[key] !== '') {
+          submitData.append(key, mapping[key]);
         }
       });
 
+      // 3. Append new brochure file if selected
+      if (newBrochureFile) {
+        submitData.append('brochure_file', newBrochureFile);
+      }
+
       if (supplierId) {
-        await api.put(`/suppliers/${supplierId}/`, rawData);
+        await api.put(`/suppliers/${supplierId}/`, submitData);
       } else {
-        await api.post('/suppliers/', { ...rawData, user: user.id });
+        submitData.append('user', String(user.id));
+        await api.post('/suppliers/', submitData);
       }
       alert('Business profile updated successfully!');
       setIsEditModalOpen(false);
+      setNewBrochureFile(null);
       fetchSupplierProfile();
     } catch (err) {
       console.error(err);
@@ -202,7 +194,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
             </div>
           </div>
           {unreadCount > 0 && (
-            <button onClick={markAsRead} className="text-[9px] font-black text-[#224194] uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl">Mark all as read</button>
+            <button onClick={markAllAsRead} className="text-[9px] font-black text-[#224194] uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl">Mark all as read</button>
           )}
         </div>
         <div className="max-h-64 overflow-y-auto no-scrollbar">
@@ -363,8 +355,9 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                 <div className="space-y-4 pt-2">
                   <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] block border-b border-indigo-50 pb-2">3. Corporate Assets & Location</label>
                   <div>
-                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Brochure URL (PDF)</label>
-                    <input className="w-full bg-indigo-50/30 border border-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold" value={businessData.brochureFile} onChange={e => setBusinessData({ ...businessData, brochureFile: e.target.value })} />
+                    <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Company Brochure (PDF)</label>
+                    <input type="file" accept=".pdf" className="w-full bg-indigo-50/30 border border-indigo-100 rounded-2xl px-4 py-3 text-xs font-bold" onChange={e => setNewBrochureFile(e.target.files ? e.target.files[0] : null)} />
+                    {businessData.brochureFile && <p className="text-[9px] text-[#224194] font-bold mt-1 tracking-tight">Current File: <span className="opacity-50">{String(businessData.brochureFile).split('/').pop()}</span></p>}
                   </div>
 
                   <div className="col-span-2">

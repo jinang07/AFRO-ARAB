@@ -503,57 +503,22 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                   </div>
                 </section>
 
-                {!isAgent && (
-                  <section className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="col-span-2">
-                      <label className="text-[9px] font-black text-amber-600 uppercase tracking-[0.2em] mb-2 block">4. Bank Information</label>
-                    </div>
-                    <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 col-span-2 sm:col-span-1">
-                      <p className="text-[8px] font-black text-amber-700 uppercase mb-1">Account Name</p>
-                      <p className="text-xs font-black text-slate-900">{viewingSupplier.accountName || 'N/A'}</p>
-                    </div>
-                    <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 col-span-2 sm:col-span-1">
-                      <p className="text-[8px] font-black text-amber-700 uppercase mb-1">Account Number</p>
-                      <p className="text-xs font-black text-slate-900">{viewingSupplier.accountNumber || 'N/A'}</p>
-                    </div>
-                    <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 col-span-2 sm:col-span-1">
-                      <p className="text-[8px] font-black text-amber-700 uppercase mb-1">Branch</p>
-                      <p className="text-xs font-black text-slate-900">{viewingSupplier.branch || 'N/A'}</p>
-                    </div>
-                    <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 col-span-2 sm:col-span-1">
-                      <p className="text-[8px] font-black text-amber-700 uppercase mb-1">IFSC Code</p>
-                      <p className="text-xs font-black text-slate-900">{viewingSupplier.ifscCode || 'N/A'}</p>
-                    </div>
-                  </section>
-                )}
 
 
                 <section className="grid grid-cols-2 gap-4 mt-6">
                   <div className="col-span-2">
-                    <label className="text-[9px] font-black text-rose-600 uppercase tracking-[0.2em] mb-2 block">5. Attached Documents</label>
+                    <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2 block">4. Attached Documents</label>
                   </div>
-                  <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 col-span-2">
-                    <p className="text-[8px] font-black text-rose-700 uppercase mb-2">Company Brochure</p>
+                  <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 col-span-2">
+                    <p className="text-[8px] font-black text-indigo-700 uppercase mb-2">Company Brochure</p>
                     {viewingSupplier.brochureFile ? (
-                      <a href={viewingSupplier.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-xl transition-all shadow-sm">
+                      <a href={viewingSupplier.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-all shadow-sm">
                         <i className="fa-solid fa-file-pdf"></i> View PDF
                       </a>
                     ) : (
                       <p className="text-xs font-bold text-slate-400">Not Provided</p>
                     )}
                   </div>
-                  {!isAgent && (
-                    <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100 col-span-2">
-                      <p className="text-[8px] font-black text-rose-700 uppercase mb-2">Payment Screenshot</p>
-                      {viewingSupplier.paymentScreenshot ? (
-                        <a href={viewingSupplier.paymentScreenshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-rose-600 hover:bg-rose-700 px-4 py-2 rounded-xl transition-all shadow-sm">
-                          <i className="fa-solid fa-image"></i> View Image
-                        </a>
-                      ) : (
-                        <p className="text-xs font-bold text-slate-400">Not Provided</p>
-                      )}
-                    </div>
-                  )}
                 </section>
               </div>
             </div>
@@ -709,11 +674,6 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                       <label className="text-[10px] font-black text-indigo-800 uppercase tracking-widest block mb-1">Company Brochure (Required PDF)</label>
                       <input type="file" required={!editingSupplier} accept=".pdf" className="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-100 file:text-indigo-800 hover:file:bg-indigo-200 transition-all cursor-pointer" onChange={e => setBrochureFile(e.target.files ? e.target.files[0] : null)} />
                       {editingSupplier && <p className="text-[9px] text-slate-400 font-bold mt-1">Leave blank to keep existing file.</p>}
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Payment Screenshot (Optional)</label>
-                      <input type="file" accept="image/*" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-100 file:text-slate-600 hover:file:bg-slate-200 transition-all cursor-pointer" onChange={e => setPaymentScreenshot(e.target.files ? e.target.files[0] : null)} />
                     </div>
                   </div>
                 </div>

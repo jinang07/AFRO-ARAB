@@ -211,7 +211,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
     return orderId.includes(searchStr) ||
       productName.includes(searchStr) ||
       supplierName.includes(searchStr) ||
-      buyerName.includes(searchStr);
+      (!(isSupplier || isPartner) && buyerName.includes(searchStr));
   });
 
   if (isLoading) {
@@ -320,7 +320,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">Customer Entity</p>
                   <p className="text-[11px] font-bold text-slate-900 truncate flex items-center gap-1">
-                    {isSupplier ? (
+                    {isSupplier || isPartner ? (
                       <>
                         <i className="fa-solid fa-user-shield text-[9px] text-[#224194]"></i>
                         Verified Client

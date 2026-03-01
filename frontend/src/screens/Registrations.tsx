@@ -218,12 +218,12 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
                 </section>
 
                 <section>
-                  <label className="text-[9px] font-black text-[#e41e31] uppercase tracking-[0.2em] mb-3 block">4. Attached Documents</label>
+                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3 block">4. Attached Documents</label>
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="p-6 bg-rose-50/30 rounded-[2rem] border border-rose-100/50">
-                      <p className="text-[10px] font-black text-[#e41e31] uppercase tracking-widest mb-4">Company Brochure</p>
+                    <div className="p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50">
+                      <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Company Brochure</p>
                       {selectedReg.brochureFile ? (
-                        <a href={selectedReg.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-[#e91141] text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">
+                        <a href={selectedReg.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all">
                           <i className="fa-solid fa-file-pdf text-sm"></i>
                           View PDF
                         </a>
@@ -231,21 +231,6 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
                         <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px]">
                           <i className="fa-solid fa-file-pdf text-sm"></i>
                           No PDF
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-6 bg-rose-50/30 rounded-[2rem] border border-rose-100/50">
-                      <p className="text-[10px] font-black text-[#e41e31] uppercase tracking-widest mb-4">Payment Screenshot</p>
-                      {selectedReg.paymentScreenshot ? (
-                        <a href={selectedReg.paymentScreenshot} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-[#e91141] text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20 hover:scale-105 transition-all">
-                          <i className="fa-solid fa-image text-sm"></i>
-                          View Image
-                        </a>
-                      ) : (
-                        <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px]">
-                          <i className="fa-solid fa-image text-sm"></i>
-                          No Image
                         </div>
                       )}
                     </div>

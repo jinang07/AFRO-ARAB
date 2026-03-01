@@ -174,7 +174,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 text-sm uppercase tracking-tight flex items-center gap-2">
-                    {isSupplier ? 'Verified Customer' : buyer.companyName}
+                    {isSupplier || isPartner ? 'Verified Customer' : buyer.companyName}
                     {isAdmin && buyer.agentName && (
                       <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded font-bold normal-case items-center gap-1 flex">
                         <i className="fa-solid fa-user-tie text-[8px]"></i>
@@ -184,13 +184,14 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded uppercase font-black tracking-widest">{buyer.country}</span>
-                    {isSupplier && (
+                    {isSupplier || isPartner ? (
                       <span className="text-[9px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase font-black tracking-widest flex items-center gap-1">
                         <i className="fa-solid fa-shield-halved text-[7px]"></i>
                         Identity Protected
                       </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">{buyer.name}</span>
                     )}
-                    {!isSupplier && <span className="text-[10px] text-slate-400 font-bold uppercase">{buyer.name}</span>}
                   </div>
                 </div>
               </div>
@@ -253,7 +254,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
               )}
             </div>
 
-            {!isSupplier && (
+            {!(isSupplier || isPartner) && (
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-50 mt-2">
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">2Y Turnover</p>
@@ -273,7 +274,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
               </div>
             )}
 
-            {isSupplier && (
+            {(isSupplier || isPartner) && (
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => setQuoteConfirmation({ isOpen: true, buyerId: buyer.id, buyerName: buyer.companyName })}
