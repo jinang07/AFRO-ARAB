@@ -6,8 +6,8 @@
 .idea/
 
 # Backend (Django)
-backend/__pycache__/
-backend/*.pyc
+**/__pycache__/
+**/*.pyc
 backend/db.sqlite3
 backend/db_v2.sqlite3
 backend/media/
