@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Supplier, AccountStatus } from '../types';
 import { api } from '../services/api';
+import { Browser } from '@capacitor/browser';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 interface SupplierFormData {
@@ -512,9 +513,16 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                   <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 col-span-2">
                     <p className="text-[8px] font-black text-indigo-700 uppercase mb-2">Company Brochure</p>
                     {viewingSupplier.brochureFile ? (
-                      <a href={viewingSupplier.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-all shadow-sm">
+                      <button
+                        onClick={async () => {
+                          if (viewingSupplier.brochureFile) {
+                            await Browser.open({ url: viewingSupplier.brochureFile });
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-all shadow-sm"
+                      >
                         <i className="fa-solid fa-file-pdf"></i> View PDF
-                      </a>
+                      </button>
                     ) : (
                       <p className="text-xs font-bold text-slate-400">Not Provided</p>
                     )}

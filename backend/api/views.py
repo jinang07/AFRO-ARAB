@@ -2,8 +2,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Supplier, Buyer, Order, User, Notification
-from .serializers import SupplierSerializer, BuyerSerializer, OrderSerializer, UserSerializer, NotificationSerializer
+from .models import Supplier, Buyer, Order, User, Notification, FCMToken
+from .serializers import SupplierSerializer, BuyerSerializer, OrderSerializer, UserSerializer, NotificationSerializer, FCMTokenSerializer
 from django.db import transaction, models
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
@@ -342,4 +342,17 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def clear_all(self, request):
         self.get_queryset().delete()
         return Response({'status': 'success'})
+
+class FCMTokenViewSet(viewsets.ModelViewSet):
+    serializer_class = FCMTokenSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return FCMToken.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        token = serializer.validated_data.get('token')
+        # Ensure token is unique for this user, delete other instances of this token
+        FCMToken.objects.filter(token=token).delete()
+        serializer.save(user=self.request.user)
 

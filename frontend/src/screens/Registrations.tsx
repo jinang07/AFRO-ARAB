@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Supplier, AccountStatus } from '../types';
+import { Browser } from '@capacitor/browser';
 
 const INITIAL_PENDING: Supplier[] = [
   {
@@ -223,10 +224,17 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
                     <div className="p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50">
                       <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Company Brochure</p>
                       {selectedReg.brochureFile ? (
-                        <a href={selectedReg.brochureFile} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all">
+                        <button
+                          onClick={async () => {
+                            if (selectedReg.brochureFile) {
+                              await Browser.open({ url: selectedReg.brochureFile });
+                            }
+                          }}
+                          className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
+                        >
                           <i className="fa-solid fa-file-pdf text-sm"></i>
                           View PDF
-                        </a>
+                        </button>
                       ) : (
                         <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px]">
                           <i className="fa-solid fa-file-pdf text-sm"></i>

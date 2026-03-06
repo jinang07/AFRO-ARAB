@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from .models import Supplier, Buyer, Order, User, Notification
+from .models import Supplier, Buyer, Order, User, Notification, FCMToken
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -177,3 +177,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+
+class FCMTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FCMToken
+        fields = ('token',)

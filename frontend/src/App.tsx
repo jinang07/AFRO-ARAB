@@ -12,6 +12,9 @@ import Agents from './screens/Agents';
 import BottomNav from './components/BottomNav';
 import Header from './components/Header';
 import { api } from './services/api';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -28,6 +31,7 @@ const App: React.FC = () => {
           const userData = await api.get('/users/me/');
           setUser(userData);
           fetchNotifications();
+          initPush();
         } catch (err) {
           console.error('Failed to restore session', err);
           api.setToken(null);
@@ -42,6 +46,10 @@ const App: React.FC = () => {
     };
 
     initAuth();
+
+    // Request notification permissions
+    LocalNotifications.requestPermissions();
+
     window.addEventListener('unauthorized', handleUnauthorized);
     return () => window.removeEventListener('unauthorized', handleUnauthorized);
   }, []);
@@ -58,6 +66,28 @@ const App: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       const data = await api.get('/notifications/');
+
+      // Check for new unread notifications
+      const unreadCount = data.filter((n: any) => !n.isRead).length;
+      const prevUnreadCount = notifications.filter((n: any) => !n.isRead).length;
+
+      if (unreadCount > prevUnreadCount) {
+        const newest = data.find((n: any) => !n.isRead);
+        if (newest) {
+          await LocalNotifications.schedule({
+            notifications: [
+              {
+                title: 'New Notification',
+                body: newest.message,
+                id: Math.floor(Math.random() * 10000),
+                schedule: { at: new Date(Date.now() + 1000) },
+                sound: 'default'
+              }
+            ]
+          });
+        }
+      }
+
       setNotifications(data);
     } catch (err) {
       console.error('Failed to fetch notifications', err);
@@ -82,9 +112,55 @@ const App: React.FC = () => {
     }
   };
 
+  const initPush = async () => {
+    if (Capacitor.getPlatform() === 'web') return;
+
+    try {
+      let permStatus = await PushNotifications.checkPermissions();
+
+      if (permStatus.receive === 'prompt') {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+
+      if (permStatus.receive !== 'granted') {
+        console.warn('Push notification permission denied');
+        return;
+      }
+
+      await PushNotifications.register();
+
+      PushNotifications.addListener('registration', async (data) => {
+        try {
+          await api.post('/fcm-tokens/', { token: data.value });
+          console.log('FCM token registered successfully');
+        } catch (err) {
+          console.error('Failed to register FCM token', err);
+        }
+      });
+
+      PushNotifications.addListener('registrationError', (error: any) => {
+        console.error('Push registration error: ', error);
+      });
+
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('Push received: ', notification);
+        fetchNotifications();
+      });
+
+      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+        console.log('Push action performed: ', action);
+        setActiveScreen(AppScreen.Dashboard);
+      });
+
+    } catch (e) {
+      console.error('Error initializing push notifications', e);
+    }
+  };
+
   const handleLogin = (userData: User) => {
     setUser(userData);
     setActiveScreen(AppScreen.Dashboard);
+    setTimeout(initPush, 500);
   };
 
   const handleLogout = () => {
@@ -106,7 +182,6 @@ const App: React.FC = () => {
   }
 
   const renderScreen = () => {
-
     switch (activeScreen) {
       case AppScreen.Dashboard: return <Dashboard user={user} />;
       case AppScreen.Suppliers: return <Suppliers user={user} />;
