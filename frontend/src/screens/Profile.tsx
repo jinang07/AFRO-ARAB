@@ -8,9 +8,10 @@ interface ProfileProps {
   notifications: any[];
   fetchNotifications: () => void;
   markAllAsRead: () => void;
+  clearAllNotifications: () => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications, markAllAsRead }) => {
+const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications, markAllAsRead, clearAllNotifications }) => {
   const initials = (user.firstName || user.name || user.username).substring(0, 2).toUpperCase();
   const isSupplier = user.role === 'SUPPLIER';
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -193,9 +194,14 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Real-time Pulse Feed</p>
             </div>
           </div>
-          {unreadCount > 0 && (
-            <button onClick={markAllAsRead} className="text-[9px] font-black text-[#224194] uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl">Mark all as read</button>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button onClick={markAllAsRead} className="text-[9px] font-black text-[#224194] uppercase tracking-widest bg-blue-50 px-3 py-2 rounded-xl active:scale-95 transition-all">Mark all as read</button>
+            )}
+            {notifications.length > 0 && (
+              <button onClick={clearAllNotifications} className="text-[9px] font-black text-rose-600 uppercase tracking-widest bg-rose-50 px-3 py-2 rounded-xl active:scale-95 transition-all">Clear All</button>
+            )}
+          </div>
         </div>
         <div className="max-h-64 overflow-y-auto no-scrollbar">
           {sortedNotifications.length > 0 ? (

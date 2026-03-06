@@ -338,3 +338,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
         self.get_queryset().update(is_read=True)
         return Response({'status': 'success'})
 
+    @action(detail=False, methods=['post'])
+    def clear_all(self, request):
+        self.get_queryset().delete()
+        return Response({'status': 'success'})
+

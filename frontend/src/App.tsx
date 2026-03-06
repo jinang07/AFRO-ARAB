@@ -73,6 +73,15 @@ const App: React.FC = () => {
     }
   };
 
+  const clearAllNotifications = async () => {
+    try {
+      await api.post('/notifications/clear_all/', {});
+      fetchNotifications();
+    } catch (err) {
+      console.error('Failed to clear notifications', err);
+    }
+  };
+
   const handleLogin = (userData: User) => {
     setUser(userData);
     setActiveScreen(AppScreen.Dashboard);
@@ -105,7 +114,7 @@ const App: React.FC = () => {
       case AppScreen.Orders: return <Orders user={user} />;
       case AppScreen.Reports: return <Reports user={user} />;
       case AppScreen.Agents: return <Agents user={user} />;
-      case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} />;
+      case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
       default: return <Dashboard user={user} />;
     }
   };
