@@ -506,26 +506,42 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
 
 
 
-                <section className="grid grid-cols-2 gap-4 mt-6">
-                  <div className="col-span-2">
-                    <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-2 block">4. Attached Documents</label>
-                  </div>
-                  <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 col-span-2">
-                    <p className="text-[8px] font-black text-indigo-700 uppercase mb-2">Company Brochure</p>
-                    {viewingSupplier.brochureFile ? (
-                      <button
-                        onClick={async () => {
-                          if (viewingSupplier.brochureFile) {
-                            await Browser.open({ url: viewingSupplier.brochureFile });
-                          }
-                        }}
-                        className="inline-flex items-center gap-2 text-[10px] font-black uppercase text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl transition-all shadow-sm"
-                      >
-                        <i className="fa-solid fa-file-pdf"></i> View PDF
-                      </button>
-                    ) : (
-                      <p className="text-xs font-bold text-slate-400">Not Provided</p>
-                    )}
+                <section className="mt-6">
+                  <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3 block">4. Attached Documents</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 flex flex-col justify-between items-start">
+                      <p className="text-[9px] font-black text-indigo-700 uppercase mb-4 tracking-wider">Company Brochure</p>
+                      {viewingSupplier.brochureFile ? (
+                        <button
+                          onClick={async () => {
+                            const url = api.getMediaUrl(viewingSupplier.brochureFile);
+                            if (url) await Browser.open({ url });
+                          }}
+                          className="w-full inline-flex items-center justify-center gap-2 text-[10px] font-black uppercase text-white bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-xl transition-all shadow-sm"
+                        >
+                          <i className="fa-solid fa-file-pdf"></i> View PDF
+                        </button>
+                      ) : (
+                        <p className="text-xs font-bold text-slate-400 py-2">Not Provided</p>
+                      )}
+                    </div>
+                    <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 flex flex-col justify-between items-start">
+                      <p className="text-[9px] font-black text-emerald-700 uppercase mb-4 tracking-wider">Payment Receipt</p>
+                      {(viewingSupplier as any).payment_screenshot || (viewingSupplier as any).paymentScreenshot ? (
+                        <button
+                          onClick={async () => {
+                            const path = (viewingSupplier as any).payment_screenshot || (viewingSupplier as any).paymentScreenshot;
+                            const url = api.getMediaUrl(path);
+                            if (url) await Browser.open({ url });
+                          }}
+                          className="w-full inline-flex items-center justify-center gap-2 text-[10px] font-black uppercase text-white bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl transition-all shadow-sm"
+                        >
+                          <i className="fa-solid fa-image"></i> View Receipt
+                        </button>
+                      ) : (
+                        <p className="text-xs font-bold text-slate-400 py-2">Not Provided</p>
+                      )}
+                    </div>
                   </div>
                 </section>
               </div>
@@ -681,6 +697,11 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                     <div>
                       <label className="text-[10px] font-black text-indigo-800 uppercase tracking-widest block mb-1">Company Brochure (Required PDF)</label>
                       <input type="file" required={!editingSupplier} accept=".pdf" className="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-indigo-100 file:text-indigo-800 hover:file:bg-indigo-200 transition-all cursor-pointer" onChange={e => setBrochureFile(e.target.files ? e.target.files[0] : null)} />
+                      {editingSupplier && <p className="text-[9px] text-slate-400 font-bold mt-1">Leave blank to keep existing file.</p>}
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-emerald-800 uppercase tracking-widest block mb-1">Payment Screenshot (Required Image)</label>
+                      <input type="file" required={!editingSupplier} accept="image/*" className="w-full bg-white border border-emerald-200 rounded-xl px-3 py-2 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 transition-all cursor-pointer" onChange={e => setPaymentScreenshot(e.target.files ? e.target.files[0] : null)} />
                       {editingSupplier && <p className="text-[9px] text-slate-400 font-bold mt-1">Leave blank to keep existing file.</p>}
                     </div>
                   </div>

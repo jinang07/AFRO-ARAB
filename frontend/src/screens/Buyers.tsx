@@ -274,7 +274,7 @@ const Buyers: React.FC<{ user: User }> = ({ user }) => {
               </div>
             )}
 
-            {(isSupplier || isPartner) && (
+            {isSupplier && (
               <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => setQuoteConfirmation({ isOpen: true, buyerId: buyer.id, buyerName: buyer.companyName })}

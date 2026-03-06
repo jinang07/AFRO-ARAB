@@ -124,13 +124,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
           <div className="bg-white p-8 rounded-[3rem] shadow-2xl border border-white/20 mb-8">
             <div className="mb-8">
               <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Supplier Onboarding</h2>
-              <p className="text-xs text-slate-500 mt-1 font-medium italic">Step {regStep} of 3 • Enterprise Verification</p>
+              <p className="text-xs text-slate-500 mt-1 font-medium italic">Step {regStep} of 4 • Enterprise Verification</p>
               <div className="h-1.5 w-full bg-slate-100 rounded-full mt-4 overflow-hidden">
-                <div className="h-full bg-[#f49022] transition-all duration-500" style={{ width: `${(regStep / 3) * 100}%` }}></div>
+                <div className="h-full bg-[#f49022] transition-all duration-500" style={{ width: `${(regStep / 4) * 100}%` }}></div>
               </div>
             </div>
 
-            <form onSubmit={regStep === 3 ? handleRegisterSubmit : (e) => { e.preventDefault(); setRegStep(s => s + 1); }} className="space-y-4">
+            <form onSubmit={regStep === 4 ? handleRegisterSubmit : (e) => { e.preventDefault(); setRegStep(s => s + 1); }} className="space-y-4">
               {regStep === 1 && (
                 <div className="space-y-4 animate-in slide-in-from-right duration-300">
                   <div className="group">
@@ -196,6 +196,65 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                 </div>
               )}
 
+              {regStep === 4 && (
+                <div className="space-y-4 animate-in slide-in-from-right duration-300">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Payment & Verification</label>
+
+                  <div className="bg-slate-900 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#f49022]/10 blur-3xl -mr-16 -mt-16"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                          <i className="fa-solid fa-building-columns text-lg text-[#f49022]"></i>
+                        </div>
+                        <span className="text-xs font-black uppercase tracking-[0.2em]">Bank Details</span>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Name</p>
+                          <p className="text-[11px] font-bold tracking-wide">AFRO ARAB BUSINESS ASSOCIATION</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Number</p>
+                            <p className="text-[11px] font-bold tracking-wide">50200111853466</p>
+                          </div>
+                          <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
+                            <p className="text-[11px] font-bold tracking-wide">HDFC BANK</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">IFSC Code</p>
+                            <p className="text-[11px] font-bold tracking-wide">HDFC0000251</p>
+                          </div>
+                          <div className="bg-white/5 p-3 rounded-xl border border-white/10">
+                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Branch</p>
+                            <p className="text-[11px] font-bold tracking-wide">RING ROAD - SURAT</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="text-[10px] font-black text-[#2e9782] uppercase tracking-widest block mb-1.5 ml-1">Payment Receipt / Screenshot (Required)</label>
+                    <div className="mb-3 p-4 bg-emerald-50 rounded-2xl border border-emerald-100/50">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Registration Fee</span>
+                        <span className="text-sm font-black text-emerald-900">₹ 2,360</span>
+                      </div>
+                      <p className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest">2,000 + 18% GST included</p>
+                    </div>
+                    <input required type="file" accept="image/*" className="w-full bg-[#2e9782]/5 border border-[#2e9782]/20 rounded-2xl px-4 py-3 text-xs text-slate-600 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-[#2e9782]/10 file:text-[#2e9782] hover:file:bg-[#2e9782]/20 transition-all cursor-pointer" onChange={e => setPaymentScreenshot(e.target.files ? e.target.files[0] : null)} />
+                  </div>
+                </div>
+              )}
+
               {showSuccessModal && (
                 <div className="bg-slate-50 p-5 rounded-3xl mb-8 border border-slate-100">
                   <p className="text-xs text-slate-600 font-bold leading-relaxed">
@@ -209,7 +268,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                   <button type="button" onClick={() => setRegStep(s => s - 1)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest text-xs">Back</button>
                 )}
                 <button type="submit" disabled={isLoading} className="flex-[2] py-4 bg-[#f49022] text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all disabled:opacity-50">
-                  {isLoading ? 'Processing...' : (regStep === 3 ? 'Complete Registration' : 'Next Step')}
+                  {isLoading ? 'Processing...' : (regStep === 4 ? 'Complete Registration' : 'Next Step')}
                 </button>
               </div>
             </form>

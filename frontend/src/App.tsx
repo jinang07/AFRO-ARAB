@@ -127,6 +127,7 @@ const App: React.FC = () => {
         return;
       }
 
+      await PushNotifications.removeAllListeners();
       await PushNotifications.register();
 
       PushNotifications.addListener('registration', async (data) => {

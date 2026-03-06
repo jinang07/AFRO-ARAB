@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Supplier, AccountStatus } from '../types';
+import { api } from '../services/api';
 import { Browser } from '@capacitor/browser';
 
 const INITIAL_PENDING: Supplier[] = [
@@ -221,26 +222,50 @@ const Registrations: React.FC<{ user: User }> = ({ user }) => {
                 <section>
                   <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3 block">4. Attached Documents</label>
                   <div className="grid grid-cols-1 gap-4">
-                    <div className="p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50">
-                      <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Company Brochure</p>
-                      {selectedReg.brochureFile ? (
-                        <button
-                          onClick={async () => {
-                            if (selectedReg.brochureFile) {
-                              await Browser.open({ url: selectedReg.brochureFile });
-                            }
-                          }}
-                          className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all"
-                        >
-                          <i className="fa-solid fa-file-pdf text-sm"></i>
-                          View PDF
-                        </button>
-                      ) : (
-                        <div className="inline-flex items-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px]">
-                          <i className="fa-solid fa-file-pdf text-sm"></i>
-                          No PDF
-                        </div>
-                      )}
+                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-6">
+                      <div>
+                        <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-4">Company Brochure</p>
+                        {selectedReg.brochureFile || (selectedReg as any).brochure_file ? (
+                          <button
+                            onClick={async () => {
+                              const path = selectedReg.brochureFile || (selectedReg as any).brochure_file;
+                              const url = api.getMediaUrl(path);
+                              if (url) await Browser.open({ url });
+                            }}
+                            className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-600 text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-indigo-500/20 hover:scale-105 transition-all w-full justify-center"
+                          >
+                            <i className="fa-solid fa-file-pdf text-sm"></i>
+                            View PDF
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px] w-full">
+                            <i className="fa-solid fa-file-pdf text-sm"></i>
+                            No PDF
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4">Payment Screenshot</p>
+                        {(selectedReg as any).payment_screenshot || (selectedReg as any).paymentScreenshot ? (
+                          <button
+                            onClick={async () => {
+                              const path = (selectedReg as any).payment_screenshot || (selectedReg as any).paymentScreenshot;
+                              const url = api.getMediaUrl(path);
+                              if (url) await Browser.open({ url });
+                            }}
+                            className="inline-flex items-center gap-3 px-6 py-3 bg-emerald-600 text-white rounded-full font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all w-full justify-center"
+                          >
+                            <i className="fa-solid fa-image text-sm"></i>
+                            View Receipt
+                          </button>
+                        ) : (
+                          <div className="inline-flex items-center justify-center gap-3 px-6 py-3 bg-slate-100 text-slate-400 rounded-full font-black uppercase tracking-widest text-[10px] w-full">
+                            <i className="fa-solid fa-image text-sm"></i>
+                            No Receipt
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </section>

@@ -3,6 +3,11 @@ import { User, Role } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
+// Debugging for mobile
+if (typeof window !== 'undefined' && (window as any).Capacitor) {
+  console.log('API URL:', API_BASE_URL);
+}
+
 // Helper to convert snake_case to camelCase
 const toCamel = (obj: any): any => {
   if (obj === null || obj === undefined) return obj;
@@ -104,6 +109,13 @@ class ApiService {
 
   async delete(endpoint: string) {
     return this.request(endpoint, { method: 'DELETE' });
+  }
+
+  getMediaUrl(path: string | null | undefined): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const baseUrl = API_BASE_URL.replace('/api/v1', '');
+    return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
   }
 }
 

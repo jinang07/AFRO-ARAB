@@ -85,6 +85,12 @@ class SupplierViewSet(viewsets.ModelViewSet):
                 supplier.user.is_active = True
                 supplier.user.save()
                 notify_user(supplier.user, f"Your supplier account for {supplier.company_name} has been APPROVED. You can now login with your mobile number.", type='SUCCESS')
+            
+            # Also notify the Associate Partner who registered this supplier
+            if supplier.associate_partner:
+                partner = User.objects.filter(username=supplier.associate_partner).first()
+                if partner:
+                    notify_user(partner, f"Your referred supplier {supplier.company_name} has been APPROVED and is now active on the platform.", type='SUCCESS')
         elif old_status != 'REJECTED' and supplier.status == 'REJECTED':
             if supplier.user:
                 user_to_delete = supplier.user
