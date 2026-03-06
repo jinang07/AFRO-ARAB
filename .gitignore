@@ -45,6 +45,10 @@ dist/
 *.sln
 *.sw?
 
-# Type-checker configs (generated)
-.pyre_configuration
-pyrightconfig.json
+# Migration & Temporary
+migrated_prompt_history/
+migration_error.log
+migration_output.txt
+node_modules_old/
+*.jks
+*.keystore

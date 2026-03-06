@@ -11,7 +11,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user, onLogout, unreadCount = 0, onMarkAllRead }) => {
   return (
-    <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100 z-40 px-4 py-3 flex items-center justify-between gap-4">
+    <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-100 z-40 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 flex-shrink-0">
         <div className="bg-white w-10 h-10 rounded-xl shadow-sm border border-slate-50 flex items-center justify-center relative p-1.5 overflow-visible">
           <img src="/logo.jpeg" alt="Logo" className="w-full h-full object-contain rounded-lg" />

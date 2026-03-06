@@ -2,8 +2,12 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.afroarab.app',
-  appName: 'Afro Arab Architect',
-  webDir: 'dist'
+  appName: 'Afro Arab',
+  webDir: 'dist',
+  server: {
+    cleartext: true,
+    androidScheme: 'http'
+  }
 };
 
 export default config;

@@ -270,7 +270,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
 
   // --- Gateway / Login View ---
   return (
-    <div className="min-h-[100dvh] bg-slate-50 flex flex-col pt-8 relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-slate-50 flex flex-col pt-[calc(2rem+env(safe-area-inset-top))] relative overflow-hidden">
       {/* Background soft gradients */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
         <div className="absolute top-[-10%] right-[-10%] w-[120%] h-[50%] bg-gradient-to-b from-[#224194]/5 to-transparent blur-3xl"></div>

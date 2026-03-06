@@ -65,11 +65,12 @@ After=network.target
 [Service]
 User=root
 Group=www-data
-WorkingDirectory=/var/www/AABA_FINAL/backend
-ExecStart=/var/www/AABA_FINAL/backend/venv/bin/gunicorn \
+WorkingDirectory=/home/ubuntu/backend/backend
+ExecStart=/home/ubuntu/backend/backend/venv/bin/gunicorn \
           --access-logfile - \
           --workers 3 \
           --bind unix:/run/gunicorn.sock \
+          --pythonpath /home/ubuntu/backend/backend \
           config.wsgi:application
 
 [Install]
@@ -94,7 +95,7 @@ server {
 
     location = /favicon.ico { access_log off; log_not_found off; }
     location /static/ {
-        root /var/www/AABA_FINAL/backend/staticfiles;
+        alias /home/ubuntu/backend/backend/staticfiles/;
     }
 
     location / {
@@ -113,3 +114,34 @@ sudo systemctl restart nginx
 ## 10. Access Your Backend
 Your API should now be live at `http://crm.medexcellenceindia.com/`.
 Try accessing the admin panel at `http://crm.medexcellenceindia.com/admin/`.
+
+## Troubleshooting 502 Bad Gateway
+If you see a "502 Bad Gateway" error, it means Nginx cannot talk to Gunicorn. Follow these steps to find the cause:
+
+### 1. Check if Gunicorn is running
+```bash
+sudo systemctl status gunicorn
+```
+*If it says "failed" or "inactive", look at the logs below.*
+
+### 2. Check Gunicorn Logs
+```bash
+sudo journalctl -u gunicorn --no-pager | tail -n 20
+```
+*Look for Python tracebacks or "ModuleNotFoundError" (often happens if virtualenv isn't right or `.env` is missing).*
+
+### 3. Check Social Permissions
+Sometimes Nginx can't read the socket file. Try:
+```bash
+sudo chmod 666 /run/gunicorn.sock
+sudo systemctl restart nginx
+```
+
+### 4. Test Gunicorn Manually
+Stop the service and run it manually to see real-time errors:
+```bash
+sudo systemctl stop gunicorn
+source venv/bin/activate
+gunicorn --bind 0.0.0.0:8000 config.wsgi
+```
+*If this works but the service doesn't, there is a path error in your `/etc/systemd/system/gunicorn.service` file.*

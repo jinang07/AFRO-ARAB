@@ -43,7 +43,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeScreen, setActiveScreen, us
   const isHighDensity = navItems.length > 5;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-200 px-1 py-3 z-[100] flex justify-around items-center safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-200 px-1 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-[100] flex justify-around items-center safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
       {navItems.map((item) => (
         <button
           key={item.id}

@@ -12,6 +12,7 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
     demandCount: 0,
     transitCount: 0,
   });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,6 +49,8 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
         demandCount: buyersRes.length,
         transitCount: transitOrders,
       });
+
+      setRecentOrders(ordersRes.slice(0, 5));
 
     } catch (err) {
       console.error('Failed to fetch dashboard stats', err);
@@ -110,6 +113,39 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
                 </div>
                 <div className="text-xl font-black text-slate-900 leading-tight mb-1">{stat.count}</div>
                 <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!isPendingSupplier && recentOrders.length > 0 && (
+        <section className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
+          <div className="flex items-center justify-between mb-5 px-2">
+            <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Recent Orders</h3>
+            <button className="text-[#224194] text-[10px] font-black uppercase tracking-widest">See All</button>
+          </div>
+
+          <div className="space-y-3">
+            {recentOrders.map((order) => (
+              <div key={order.id} className="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                    <i className="fa-solid fa-file-invoice text-xs"></i>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 leading-none mb-1">Order #{order.id}</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      {new Date(order.createdAt || order.created_at).toLocaleDateString()} • {order.buyerName || 'Global Buyer'}
+                    </p>
+                  </div>
+                </div>
+                <div className={`text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest ${order.status === 'SHIPPED' ? 'bg-amber-50 text-amber-600' :
+                  order.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' :
+                    'bg-slate-50 text-slate-400'
+                  }`}>
+                  {order.status.replace(/_/g, ' ')}
+                </div>
               </div>
             ))}
           </div>
