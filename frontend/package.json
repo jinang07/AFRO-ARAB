@@ -10,6 +10,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor-firebase/crashlytics": "^8.1.0",
+    "@capacitor-firebase/performance": "^8.1.0",
     "@capacitor/android": "^8.1.0",
     "@capacitor/browser": "^8.0.1",
     "@capacitor/core": "^8.1.0",
@@ -17,6 +19,7 @@
     "@capacitor/local-notifications": "^8.0.1",
     "@capacitor/push-notifications": "^8.0.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.10.0",
     "lucide-react": "^0.454.0",
     "motion": "^11.11.17",
     "react": "^19.2.3",

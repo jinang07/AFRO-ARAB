@@ -9,12 +9,15 @@ import Orders from './screens/Orders';
 import Reports from './screens/Reports';
 import Profile from './screens/Profile';
 import Agents from './screens/Agents';
+import NotificationsScreen from './screens/Notifications';
 import BottomNav from './components/BottomNav';
 import Header from './components/Header';
 import { api } from './services/api';
-import { LocalNotifications } from '@capacitor/local-notifications';
-import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { FirebaseCrashlytics } from '@capacitor-firebase/crashlytics';
+import { useRef } from 'react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -22,6 +25,26 @@ const App: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
 
   const [notifications, setNotifications] = useState<any[]>([]);
+  const shownNotificationIds = useRef<Set<number>>(new Set());
+
+  // Initialize Crashlytics for global error reporting
+  useEffect(() => {
+    if (Capacitor.getPlatform() === 'web') return;
+
+    // Log unhandled JS exceptions explicitly to native Crashlytics
+    window.onerror = (message, source, lineno, colno, error) => {
+      FirebaseCrashlytics.recordException({
+        message: `${message} at ${source}:${lineno}:${colno}`,
+      });
+      return false;
+    };
+
+    window.onunhandledrejection = (event) => {
+      FirebaseCrashlytics.recordException({
+        message: `Unhandled promise rejection: ${event.reason}`,
+      });
+    };
+  }, []);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -31,7 +54,6 @@ const App: React.FC = () => {
           const userData = await api.get('/users/me/');
           setUser(userData);
           fetchNotifications();
-          initPush();
         } catch (err) {
           console.error('Failed to restore session', err);
           api.setToken(null);
@@ -40,19 +62,44 @@ const App: React.FC = () => {
       setIsInitializing(false);
     };
 
+    const initPush = async () => {
+      if (Capacitor.getPlatform() === 'web') return;
+
+      try {
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+
+        if (permStatus.receive !== 'granted') return;
+
+        await PushNotifications.register();
+
+        await PushNotifications.addListener('registration', async (token) => {
+          await api.post('/fcm-tokens/', { token: token.value });
+        });
+
+        await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+          fetchNotifications();
+        });
+
+        await LocalNotifications.requestPermissions();
+      } catch (e) {
+        console.error('Error initializing push notifications', e);
+      }
+    };
+
     const handleUnauthorized = () => {
       setUser(null);
       api.setToken(null);
     };
 
     initAuth();
-
-    // Request notification permissions
-    LocalNotifications.requestPermissions();
+    if (user) initPush();
 
     window.addEventListener('unauthorized', handleUnauthorized);
     return () => window.removeEventListener('unauthorized', handleUnauthorized);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     let interval: any;
@@ -66,29 +113,27 @@ const App: React.FC = () => {
   const fetchNotifications = async () => {
     try {
       const data = await api.get('/notifications/');
-
-      // Check for new unread notifications
-      const unreadCount = data.filter((n: any) => !n.isRead).length;
-      const prevUnreadCount = notifications.filter((n: any) => !n.isRead).length;
-
-      if (unreadCount > prevUnreadCount) {
-        const newest = data.find((n: any) => !n.isRead);
-        if (newest) {
-          await LocalNotifications.schedule({
-            notifications: [
-              {
-                title: 'New Notification',
-                body: newest.message,
-                id: Math.floor(Math.random() * 10000),
-                schedule: { at: new Date(Date.now() + 1000) },
-                sound: 'default'
-              }
-            ]
-          });
-        }
-      }
-
       setNotifications(data);
+
+      // Show local notification for new unread ones
+      if (Capacitor.getPlatform() !== 'web') {
+        const unread = data.filter((n: any) => !n.isRead);
+        unread.forEach((n: any) => {
+          if (!shownNotificationIds.current.has(n.id)) {
+            LocalNotifications.schedule({
+              notifications: [{
+                title: 'Afro Arab',
+                body: n.message,
+                id: n.id,
+                schedule: { at: new Date(Date.now() + 1000) },
+                extra: { type: n.type },
+                smallIcon: 'ic_stat_name',
+              }]
+            });
+            shownNotificationIds.current.add(n.id);
+          }
+        });
+      }
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
@@ -112,56 +157,9 @@ const App: React.FC = () => {
     }
   };
 
-  const initPush = async () => {
-    if (Capacitor.getPlatform() === 'web') return;
-
-    try {
-      let permStatus = await PushNotifications.checkPermissions();
-
-      if (permStatus.receive === 'prompt') {
-        permStatus = await PushNotifications.requestPermissions();
-      }
-
-      if (permStatus.receive !== 'granted') {
-        console.warn('Push notification permission denied');
-        return;
-      }
-
-      await PushNotifications.removeAllListeners();
-      await PushNotifications.register();
-
-      PushNotifications.addListener('registration', async (data) => {
-        try {
-          await api.post('/fcm-tokens/', { token: data.value });
-          console.log('FCM token registered successfully');
-        } catch (err) {
-          console.error('Failed to register FCM token', err);
-        }
-      });
-
-      PushNotifications.addListener('registrationError', (error: any) => {
-        console.error('Push registration error: ', error);
-      });
-
-      PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('Push received: ', notification);
-        fetchNotifications();
-      });
-
-      PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        console.log('Push action performed: ', action);
-        setActiveScreen(AppScreen.Dashboard);
-      });
-
-    } catch (e) {
-      console.error('Error initializing push notifications', e);
-    }
-  };
-
   const handleLogin = (userData: User) => {
     setUser(userData);
     setActiveScreen(AppScreen.Dashboard);
-    setTimeout(initPush, 500);
   };
 
   const handleLogout = () => {
@@ -191,6 +189,7 @@ const App: React.FC = () => {
       case AppScreen.Reports: return <Reports user={user} />;
       case AppScreen.Agents: return <Agents user={user} />;
       case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
+      case AppScreen.Notifications: return <NotificationsScreen user={user} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
       default: return <Dashboard user={user} />;
     }
   };
@@ -200,8 +199,9 @@ const App: React.FC = () => {
       <Header
         user={user}
         onLogout={handleLogout}
-        unreadCount={notifications.filter(n => !n.is_read).length}
+        unreadCount={notifications.filter(n => !n.isRead).length}
         onMarkAllRead={markAllAsRead}
+        onNotificationClick={() => setActiveScreen(AppScreen.Notifications)}
       />
 
       <main className="flex-1 overflow-y-auto p-4 w-full max-w-lg mx-auto pb-32">

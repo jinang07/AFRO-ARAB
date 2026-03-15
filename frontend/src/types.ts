@@ -7,7 +7,8 @@ export enum AppScreen {
   Reports = 'reports',
   Login = 'login',
   Profile = 'profile',
-  Agents = 'agents'
+  Agents = 'agents',
+  Notifications = 'notifications'
 }
 
 export enum AppSection {

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { User } from '../types';
 import { api } from '../services/api';
+import { FirebaseCrashlytics } from '@capacitor-firebase/crashlytics';
+import { Capacitor } from '@capacitor/core';
 
 const Dashboard: React.FC<{ user: User }> = ({ user }) => {
   const isPendingSupplier = user.role === 'SUPPLIER' && user.status === 'PENDING';
@@ -59,11 +61,12 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-[#224194] p-8 rounded-[3rem] text-white shadow-xl shadow-[#224194]/20 overflow-hidden relative">
         <div className="relative z-10">
-          <h2 className="text-3xl font-black mb-1"> Ahlan, {(user.firstName || user.name || user.username).split(' ')[0]} 👋</h2>
+          <h2 className="text-3xl font-black mb-1"> Hello, {(user.firstName || user.name || user.username).split(' ')[0]} 👋</h2>
           <p className="text-white/60 text-sm mb-8 font-medium italic">Global trade, localized intelligence.</p>
 
           <div className="grid grid-cols-2 gap-4">
@@ -79,6 +82,7 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
         </div>
         <i className="fa-solid fa-earth-africa text-white/5 text-9xl absolute -bottom-10 -right-10"></i>
       </div>
+
 
       {isPendingSupplier && (
         <div className="bg-rose-50 border border-rose-100 p-6 rounded-[2.5rem] flex flex-col items-center text-center gap-4">
