@@ -271,18 +271,30 @@ class OrderViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
+        queryset = Order.objects.none()
+        
         if user.role == 'ADMIN':
-            return Order.objects.all()
-        if user.role == 'AGENT':
-            return Order.objects.filter(assigned_agent=user)
-        if user.role == 'SUPPLIER':
-            return Order.objects.filter(supplier__user=user)
-        if user.role == 'PARTNER':
-            return Order.objects.filter(supplier__associate_partner=user.username)
-        return Order.objects.none()
+            queryset = Order.objects.all()
+        elif user.role == 'AGENT':
+            queryset = Order.objects.filter(assigned_agent=user)
+        elif user.role == 'SUPPLIER':
+            queryset = Order.objects.filter(supplier__user=user)
+        elif user.role == 'PARTNER':
+            queryset = Order.objects.filter(supplier__associate_partner=user.username)
+            
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(Q(id__icontains=search) | Q(readable_id__icontains=search))
+            
+        return queryset
 
     def get_permissions(self):
         return [permissions.IsAuthenticated()]
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if request.method not in permissions.SAFE_METHODS and request.user.role != 'ADMIN':
+            self.permission_denied(request, message="Only administrators can create or modify orders.")
 
     def perform_create(self, serializer):
         # Auto-assign agent from buyer if not provided

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { User } from '../types';
+import { AppScreen, User } from '../types';
 import { api } from '../services/api';
 import { FirebaseCrashlytics } from '@capacitor-firebase/crashlytics';
 import { Capacitor } from '@capacitor/core';
 
-const Dashboard: React.FC<{ user: User }> = ({ user }) => {
+const Dashboard: React.FC<{ user: User; setActiveScreen: (screen: AppScreen) => void }> = ({ user, setActiveScreen }) => {
   const isPendingSupplier = user.role === 'SUPPLIER' && user.status === 'PENDING';
 
   const [stats, setStats] = useState({
@@ -12,7 +12,7 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
     pendingSync: 0,
     networkCount: 0,
     demandCount: 0,
-    transitCount: 0,
+    orderCount: 0,
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
@@ -49,7 +49,7 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
         pendingSync: pendingOrders,
         networkCount: suppliersRes.length,
         demandCount: buyersRes.length,
-        transitCount: transitOrders,
+        orderCount: ordersRes.length,
       });
 
       setRecentOrders(ordersRes.slice(0, 5));
@@ -66,7 +66,7 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-[#224194] p-8 rounded-[3rem] text-white shadow-xl shadow-[#224194]/20 overflow-hidden relative">
         <div className="relative z-10">
-          <h2 className="text-3xl font-black mb-1"> Hello, {(user.firstName || user.name || user.username).split(' ')[0]} 👋</h2>
+          <h2 className="text-3xl font-black mb-1"> Hello, {(user.firstName || user.name || user.username).split(' ')[0]}</h2>
           <p className="text-white/60 text-sm mb-8 font-medium italic">Global trade, localized intelligence.</p>
 
           <div className="grid grid-cols-2 gap-4">
@@ -102,14 +102,19 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
         <section>
           <div className="flex items-center justify-between mb-5 px-2">
             <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Ecosystem Pulse</h3>
-            <button className="text-[#f49022] text-[10px] font-black uppercase tracking-widest">Global View</button>
+            <button 
+              onClick={() => setActiveScreen(AppScreen.Buyers)}
+              className="text-[#f49022] text-[10px] font-black uppercase tracking-widest"
+            >
+              Global View
+            </button>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: 'Network', count: stats.networkCount, icon: 'fa-box', color: 'text-[#224194]', bg: 'bg-[#224194]/5' },
               { label: 'Demand', count: stats.demandCount, icon: 'fa-users', color: 'text-[#2e9782]', bg: 'bg-[#2e9782]/5' },
-              { label: 'Transit', count: stats.transitCount, icon: 'fa-truck', color: 'text-[#f49022]', bg: 'bg-[#f49022]/5' }
+              { label: 'Orders', count: stats.orderCount, icon: 'fa-truck', color: 'text-[#f49022]', bg: 'bg-[#f49022]/5' }
             ].map((stat) => (
               <div key={stat.label} className="bg-white p-5 rounded-[2rem] border border-slate-100 flex flex-col items-center text-center shadow-sm">
                 <div className={`${stat.bg} ${stat.color} w-10 h-10 rounded-2xl flex items-center justify-center mb-3 shadow-inner`}>
@@ -127,7 +132,12 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
         <section className="animate-in fade-in slide-in-from-bottom-6 duration-700 delay-300">
           <div className="flex items-center justify-between mb-5 px-2">
             <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">Recent Orders</h3>
-            <button className="text-[#224194] text-[10px] font-black uppercase tracking-widest">See All</button>
+            <button 
+              onClick={() => setActiveScreen(AppScreen.Orders)}
+              className="text-[#224194] text-[10px] font-black uppercase tracking-widest"
+            >
+              See All
+            </button>
           </div>
 
           <div className="space-y-3">
@@ -138,10 +148,17 @@ const Dashboard: React.FC<{ user: User }> = ({ user }) => {
                     <i className="fa-solid fa-file-invoice text-xs"></i>
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-slate-900 leading-none mb-1">Order #{order.id}</h4>
-                    <p className="text-[10px] text-slate-500 font-medium">
-                      {new Date(order.createdAt || order.created_at).toLocaleDateString()} • {order.buyerName || 'Global Buyer'}
+                    <h4 className="text-xs font-black text-slate-900 leading-none mb-1">
+                      Order #{order.readableId || (order.id && order.id.toString().substring(0, 8))}
+                    </h4>
+                    <p className="text-[10px] text-slate-500 font-medium leading-normal">
+                      Created: {new Date(order.createdAt || order.created_at).toLocaleDateString()} • {order.buyerName || 'Global Buyer'}
                     </p>
+                    {order.expectedDeliveryDate && (
+                      <p className="text-[10px] text-indigo-500 font-bold mt-0.5 leading-none">
+                        Exp. Delivery: {new Date(order.expectedDeliveryDate).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className={`text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-widest ${order.status === 'SHIPPED' ? 'bg-amber-50 text-amber-600' :

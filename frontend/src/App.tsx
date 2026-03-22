@@ -182,7 +182,7 @@ const App: React.FC = () => {
 
   const renderScreen = () => {
     switch (activeScreen) {
-      case AppScreen.Dashboard: return <Dashboard user={user} />;
+      case AppScreen.Dashboard: return <Dashboard user={user} setActiveScreen={setActiveScreen} />;
       case AppScreen.Suppliers: return <Suppliers user={user} />;
       case AppScreen.Buyers: return <Buyers user={user} />;
       case AppScreen.Orders: return <Orders user={user} />;
@@ -190,7 +190,7 @@ const App: React.FC = () => {
       case AppScreen.Agents: return <Agents user={user} />;
       case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
       case AppScreen.Notifications: return <NotificationsScreen user={user} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
-      default: return <Dashboard user={user} />;
+      default: return <Dashboard user={user} setActiveScreen={setActiveScreen} />;
     }
   };
 

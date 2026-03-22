@@ -508,8 +508,8 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
 
                 <section className="mt-6">
                   <label className="text-[9px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-3 block">4. Attached Documents</label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 flex flex-col justify-between items-start">
+                  <div className={`grid grid-cols-1 ${isAgent ? '' : 'sm:grid-cols-2'} gap-4`}>
+                    <div className={`bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100 flex flex-col justify-between items-start ${isAgent ? 'w-full' : ''}`}>
                       <p className="text-[9px] font-black text-indigo-700 uppercase mb-4 tracking-wider">Company Brochure</p>
                       {viewingSupplier.brochureFile ? (
                         <button
@@ -525,23 +525,25 @@ const Suppliers: React.FC<{ user: User }> = ({ user }) => {
                         <p className="text-xs font-bold text-slate-400 py-2">Not Provided</p>
                       )}
                     </div>
-                    <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 flex flex-col justify-between items-start">
-                      <p className="text-[9px] font-black text-emerald-700 uppercase mb-4 tracking-wider">Payment Receipt</p>
-                      {(viewingSupplier as any).payment_screenshot || (viewingSupplier as any).paymentScreenshot ? (
-                        <button
-                          onClick={async () => {
-                            const path = (viewingSupplier as any).payment_screenshot || (viewingSupplier as any).paymentScreenshot;
-                            const url = api.getMediaUrl(path);
-                            if (url) await Browser.open({ url });
-                          }}
-                          className="w-full inline-flex items-center justify-center gap-2 text-[10px] font-black uppercase text-white bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl transition-all shadow-sm"
-                        >
-                          <i className="fa-solid fa-image"></i> View Receipt
-                        </button>
-                      ) : (
-                        <p className="text-xs font-bold text-slate-400 py-2">Not Provided</p>
-                      )}
-                    </div>
+                    {!isAgent && (
+                      <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 flex flex-col justify-between items-start">
+                        <p className="text-[9px] font-black text-emerald-700 uppercase mb-4 tracking-wider">Payment Receipt</p>
+                        {(viewingSupplier as any).payment_screenshot || (viewingSupplier as any).paymentScreenshot ? (
+                          <button
+                            onClick={async () => {
+                              const path = (viewingSupplier as any).payment_screenshot || (viewingSupplier as any).paymentScreenshot;
+                              const url = api.getMediaUrl(path);
+                              if (url) await Browser.open({ url });
+                            }}
+                            className="w-full inline-flex items-center justify-center gap-2 text-[10px] font-black uppercase text-white bg-emerald-600 hover:bg-emerald-700 px-6 py-3 rounded-xl transition-all shadow-sm"
+                          >
+                            <i className="fa-solid fa-image"></i> View Receipt
+                          </button>
+                        ) : (
+                          <p className="text-xs font-bold text-slate-400 py-2">Not Provided</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>

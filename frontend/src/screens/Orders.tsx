@@ -115,7 +115,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
   };
 
   const getVisibleStages = () => {
-    if (isAdmin || isAgent) return FULL_LIFECYCLE;
+    if (isAdmin) return FULL_LIFECYCLE;
     return FULL_LIFECYCLE.filter(s => s !== 'COMMISSION_RECEIVED');
   };
 
@@ -138,7 +138,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
 
   const openEditModal = (e: React.MouseEvent, order: Order) => {
     e.stopPropagation();
-    if (!isAdmin && !isAgent) return;
+    if (!isAdmin) return;
     setEditingOrder(order);
     setFormData({
       productName: order.productName,
@@ -203,15 +203,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
     if (!matchesTab) return false;
 
     const searchStr = searchTerm.toLowerCase();
-    const orderId = (o.readableId || `ORD-${o.id}`).toLowerCase();
-    const productName = (o.productName || '').toLowerCase();
-    const supplierName = (o.supplierName || '').toLowerCase();
-    const buyerName = (o.buyerName || '').toLowerCase();
+    const orderId = (o.readableId || o.id || '').toString().toLowerCase();
 
-    return orderId.includes(searchStr) ||
-      productName.includes(searchStr) ||
-      supplierName.includes(searchStr) ||
-      (!(isSupplier || isPartner) && buyerName.includes(searchStr));
+    return orderId.includes(searchStr);
   });
 
   if (isLoading) {
@@ -247,7 +241,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
         <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
         <input
           type="text"
-          placeholder="Search by ID, product, supplier or buyer..."
+          placeholder="Search by Order ID..."
           className="w-full pl-12 pr-4 py-4 bg-white rounded-3xl border border-slate-100 shadow-sm focus:ring-2 focus:ring-[#224194] outline-none transition-all text-sm font-medium"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -279,14 +273,28 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${currentTab === 'Archive' ? 'text-[#2e9782]' : 'text-[#224194]'}`}>{order.readableId || `ORD-${order.id}`}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${currentTab === 'Archive' ? 'text-[#2e9782]' : 'text-[#224194]'}`}>
+                    {order.readableId || (order.id && order.id.toString().substring(0, 8))}
+                  </span>
                   <h3 className="font-bold text-slate-900 text-md mt-1">{order.productName}</h3>
-                  <p className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tight">
-                    {currentTab === 'Archive' ? `Fulfilled on ${new Date(order.createdAt || '').toLocaleDateString()}` : `Created: ${new Date(order.createdAt || '').toLocaleDateString()} • Expected: ${order.expectedDeliveryDate || 'UNSET'}`}
-                  </p>
+                  <div className="mt-1 space-y-0.5">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                      Created: {new Date(order.createdAt || '').toLocaleDateString()}
+                    </p>
+                    {! (currentTab === 'Archive') && order.expectedDeliveryDate && (
+                      <p className="text-[10px] text-indigo-500 font-bold uppercase tracking-tight">
+                        Exp. Delivery: {new Date(order.expectedDeliveryDate).toLocaleDateString()}
+                      </p>
+                    )}
+                    {currentTab === 'Archive' && (
+                       <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-tight">
+                         Fulfilled on {new Date(order.createdAt || '').toLocaleDateString()}
+                       </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {(isAdmin || isAgent) && (
+                  {isAdmin && (
                     <div className="flex gap-2">
                       <span className="text-[8px] font-black text-[#224194] bg-[#224194]/10 px-2 py-1 rounded uppercase tracking-tighter self-center mr-2">
                         {order.agentName || 'No Agent'}
@@ -294,11 +302,9 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
                       <button onClick={(e) => openEditModal(e, order)} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:text-[#224194] flex items-center justify-center transition-colors">
                         <i className="fa-solid fa-pen-nib text-xs"></i>
                       </button>
-                      {isAdmin && (
-                        <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmation({ isOpen: true, orderId: order.id }); }} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
-                          <i className="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                      )}
+                      <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmation({ isOpen: true, orderId: order.id }); }} className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors">
+                        <i className="fa-solid fa-trash-can text-xs"></i>
+                      </button>
                     </div>
                   )}
                   {isAgent && (
@@ -389,7 +395,7 @@ const Orders: React.FC<{ user: User }> = ({ user }) => {
         )}
       </div>
 
-      {isModalOpen && (isAdmin || isAgent) && (
+      {isModalOpen && isAdmin && (
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in">
           <div className="bg-white w-full max-w-md rounded-[3rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-12">
             <div className="p-8">

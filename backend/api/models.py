@@ -134,6 +134,26 @@ class Order(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self.readable_id:
+            # Generate a numeric ID like ORD-1001
+            from django.db.models.functions import Cast, Substr
+            from django.db.models import IntegerField
+            
+            last_order = Order.objects.filter(readable_id__startswith='ORD-').annotate(
+                num_suffix=Cast(Substr('readable_id', 5), output_field=IntegerField())
+            ).order_by('-num_suffix').first()
+
+            if last_order and last_order.readable_id:
+                try:
+                    last_num = int(last_order.readable_id.split('-')[1])
+                    self.readable_id = f"ORD-{last_num + 1}"
+                except (ValueError, IndexError):
+                    self.readable_id = "ORD-1001"
+            else:
+                self.readable_id = "ORD-1001"
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Order {self.readable_id or self.id}"
 
