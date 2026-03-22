@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { User, Supplier } from '../types';
 import { api } from '../services/api';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+import { Capacitor } from '@capacitor/core';
 
 interface ProfileProps {
   user: User;
@@ -249,17 +252,41 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
               try {
                 // Now returns a proper Blob directly
                 const blob = await api.exportBackup(); 
-                
-                const url = window.URL.createObjectURL(blob as Blob);
-                const a = document.createElement('a');
                 const date = new Date().toISOString().split('T')[0];
-                a.href = url;
-                a.download = `AFRO_ARAB_BACKUP_${date}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                showToast('Backup ZIP downloaded successfully! Open CSVs with Excel.', 'success');
+                const fileName = `AFRO_ARAB_BACKUP_${date}.zip`;
+                
+                if (Capacitor.getPlatform() !== 'web') {
+                  // Mobile logic: Save to filesystem and share
+                  const reader = new FileReader();
+                  reader.readAsDataURL(blob as Blob);
+                  reader.onloadend = async () => {
+                    const base64data = (reader.result as string).split(',')[1];
+                    const tempFile = await Filesystem.writeFile({
+                      path: fileName,
+                      data: base64data,
+                      directory: Directory.Cache
+                    });
+
+                    await Share.share({
+                      title: 'Afro Arab Data Backup',
+                      text: 'Platform data backup (ZIP/CSV)',
+                      url: tempFile.uri,
+                      dialogTitle: 'Save Backup'
+                    });
+                    showToast('Backup ready to save/share!', 'success');
+                  };
+                } else {
+                  // Web logic: Standard link download
+                  const url = window.URL.createObjectURL(blob as Blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = fileName;
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                  showToast('Backup ZIP downloaded successfully!', 'success');
+                }
               } catch (err: any) {
                 console.error(err);
                 showToast('Failed to generate backup: ' + (err.message || 'Unknown error'), 'error');
