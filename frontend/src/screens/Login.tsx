@@ -338,10 +338,13 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
 
       {/* Header Branding */}
       <div className="w-full flex flex-col items-center px-6 mb-6 relative z-10 animate-in fade-in slide-in-from-top duration-700">
-        <div className="bg-white p-6 rounded-[2.5rem] shadow-xl flex items-center justify-center mb-2 w-48 h-40 transform hover:scale-105 transition-transform duration-500 overflow-hidden">
+        <div className="bg-white p-8 rounded-[3rem] shadow-2xl flex items-center justify-center mb-4 w-56 h-48 transform hover:scale-110 transition-transform duration-500 overflow-hidden border border-slate-50">
           <img src="/logo.jpeg" alt="AFRO ARAB Logo" className="w-full h-full object-contain" />
         </div>
-        <p className="text-[10px] font-medium text-slate-400 uppercase tracking-[0.4em] animate-in fade-in slide-in-from-bottom duration-1000 delay-300">globally connected</p>
+        <div className="text-center space-y-1">
+          <p className="text-[10px] font-black text-[#224194] uppercase tracking-[0.4em] animate-in fade-in slide-in-from-bottom duration-1000 delay-300">AFRO ARAB</p>
+          <p className="text-[8px] font-medium text-slate-400 uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom duration-1000 delay-500">Globally Connected</p>
+        </div>
       </div>
 
       {/* Access Portal Card */}
@@ -532,8 +535,22 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
+
+const Footer: React.FC = () => (
+  <div className="w-full py-6 flex flex-col items-center justify-center gap-1.5 opacity-60 animate-in fade-in duration-1000 delay-700">
+    <div className="flex items-center gap-2">
+      <div className="h-[1px] w-4 bg-slate-300"></div>
+      <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">build by</span>
+      <div className="h-[1px] w-4 bg-slate-300"></div>
+    </div>
+    <span className="text-[10px] font-black text-[#224194] uppercase tracking-widest hover:text-[#f49022] transition-colors cursor-default">jinang jain</span>
+  </div>
+);
 
 export default Login;

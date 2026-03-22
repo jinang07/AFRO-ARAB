@@ -12,6 +12,7 @@ import Agents from './screens/Agents';
 import NotificationsScreen from './screens/Notifications';
 import BottomNav from './components/BottomNav';
 import Header from './components/Header';
+import SplashScreen from './components/SplashScreen';
 import { api } from './services/api';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
@@ -169,11 +170,7 @@ const App: React.FC = () => {
   };
 
   if (isInitializing) {
-    return (
-      <div className="h-[100dvh] bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <SplashScreen />;
   }
 
   if (!user) {
