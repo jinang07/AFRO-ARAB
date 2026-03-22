@@ -229,7 +229,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
       {user.role === 'ADMIN' && (
         <div className="bg-white p-8 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 space-y-4">
           <div>
-            <h3 className="text-sm font-black uppercase tracking-widest text-rose-600">Security & Backup</h3>
+            <h3 className="text-sm font-black uppercase tracking-widest text-[#224194]">Security & Backup</h3>
             <p className="text-[9px] font-bold text-slate-400 mt-0.5">Protect your data assets locally</p>
           </div>
           <button
@@ -252,7 +252,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                 alert('Failed to generate backup.');
               }
             }}
-            className="w-full py-4 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-rose-100 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-[#224194]/5 text-[#224194] rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-[#224194]/10 flex items-center justify-center gap-2"
           >
             <i className="fa-solid fa-download"></i>
             Download Complete Data Backup
