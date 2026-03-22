@@ -235,14 +235,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <button
             onClick={async () => {
               try {
-                // Fetch as blob for ZIP file
-                const response = await api.exportBackup(); 
-                // Since our api.ts converts json by default, we need to handle potential issues.
-                // However, for a GET request returning a ZIP, fetch might need care.
-                // I will add a raw request method to api.ts if needed, but let's try standard approach.
-                const blob = new Blob([response instanceof Blob ? response : JSON.stringify(response)], { type: 'application/zip' });
+                // Now returns a proper Blob directly
+                const blob = await api.exportBackup(); 
                 
-                const url = window.URL.createObjectURL(blob);
+                const url = window.URL.createObjectURL(blob as Blob);
                 const a = document.createElement('a');
                 const date = new Date().toISOString().split('T')[0];
                 a.href = url;

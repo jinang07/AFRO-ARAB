@@ -54,15 +54,20 @@ class ApiService {
     }
   }
 
-  async request(endpoint: string, options: RequestInit = {}) {
+  async request(endpoint: string, options: RequestInit = {}, isBlob: boolean = false) {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = new Headers(options.headers || {});
+
+    // Always get the freshest token from localStorage if none in memory
+    if (!this.token) {
+      this.token = localStorage.getItem('access_token');
+    }
 
     if (this.token) {
       headers.set('Authorization', `Bearer ${this.token}`);
     }
 
-    if (!(options.body instanceof FormData)) {
+    if (!(options.body instanceof FormData) && !isBlob) {
       headers.set('Content-Type', 'application/json');
     }
 
@@ -72,7 +77,6 @@ class ApiService {
     });
 
     if (response.status === 401) {
-      // Handle unauthorized (logout)
       this.setToken(null);
       window.dispatchEvent(new CustomEvent('unauthorized'));
     }
@@ -83,6 +87,7 @@ class ApiService {
     }
 
     if (response.status === 204) return null;
+    if (isBlob) return response.blob();
 
     const data = await response.json();
     return toCamel(data);
@@ -93,14 +98,7 @@ class ApiService {
   }
 
   async exportBackup() {
-    const url = `${API_BASE_URL}/export-backup/`;
-    const headers = new Headers();
-    if (this.token) {
-      headers.set('Authorization', `Bearer ${this.token}`);
-    }
-    const response = await fetch(url, { method: 'GET', headers });
-    if (!response.ok) throw new Error('Backup failed');
-    return response.blob();
+    return this.request('/export-backup/', { method: 'GET' }, true);
   }
 
   async post(endpoint: string, data: any) {
