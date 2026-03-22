@@ -248,9 +248,9 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
                 alert('Backup ZIP downloaded successfully! You can open the CSV files inside with Excel.');
-              } catch (err) {
+              } catch (err: any) {
                 console.error(err);
-                alert('Failed to generate backup.');
+                alert('Failed to generate backup: ' + (err.message || 'Unknown error'));
               }
             }}
             className="w-full py-4 bg-[#224194]/5 text-[#224194] rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-[#224194]/10 flex items-center justify-center gap-2"

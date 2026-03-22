@@ -392,7 +392,7 @@ class ExportBackupView(APIView):
                 # 1. Export Orders
                 orders_buffer = io.StringIO()
                 writer = csv.writer(orders_buffer)
-                writer.writerow(['ID', 'Readable ID', 'Buyer', 'Supplier', 'Status', 'Product', 'Quantity', 'Address', 'Created At', 'Expected Delivery'])
+                writer.writerow(['ID', 'Readable ID', 'Buyer', 'Supplier', 'Status', 'Product', 'Quantity', 'Created At', 'Expected Delivery'])
                 for order in Order.objects.all():
                     writer.writerow([
                         str(order.id), 
@@ -402,7 +402,6 @@ class ExportBackupView(APIView):
                         str(order.status),
                         str(order.product_name),
                         str(order.quantity),
-                        str(order.delivery_address),
                         str(order.created_at),
                         str(order.expected_delivery_date or '')
                     ])
