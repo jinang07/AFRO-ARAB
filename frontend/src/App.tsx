@@ -164,8 +164,11 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    setUser(null);
+    // 1. Clear token synchronously first to prevent re-auth on re-render
     api.setToken(null);
+    // 2. Clear user state to trigger immediate transition to Login screen
+    setUser(null);
+    // 3. Reset navigation state for next session
     setActiveScreen(AppScreen.Dashboard);
   };
 
