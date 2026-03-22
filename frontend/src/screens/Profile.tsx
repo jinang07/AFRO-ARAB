@@ -250,7 +250,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <button
             onClick={async () => {
               try {
-                showToast('Generating backup...', 'info');
+                showToast('Generating backup...', 'success');
                 const blob = await api.exportBackup(); 
                 
                 if (!blob || (blob as Blob).size === 0) {
