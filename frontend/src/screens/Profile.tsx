@@ -20,6 +20,18 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
   const [isNotifLoading, setIsNotifLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [newBrochureFile, setNewBrochureFile] = useState<File | null>(null);
+  const [toast, setToast] = useState<{ show: boolean, message: string, type: 'success' | 'error' }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 4000);
+  };
 
   // Business Data for Supplier
   const [businessData, setBusinessData] = useState({
@@ -247,10 +259,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                alert('Backup ZIP downloaded successfully! You can open the CSV files inside with Excel.');
+                showToast('Backup ZIP downloaded successfully! Open CSVs with Excel.', 'success');
               } catch (err: any) {
                 console.error(err);
-                alert('Failed to generate backup: ' + (err.message || 'Unknown error'));
+                showToast('Failed to generate backup: ' + (err.message || 'Unknown error'), 'error');
               }
             }}
             className="w-full py-4 bg-[#224194]/5 text-[#224194] rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-[#224194]/10 flex items-center justify-center gap-2"
@@ -392,6 +404,29 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                 </button>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Toast Notification */}
+      {toast.show && (
+        <div 
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[999] w-[90%] max-w-sm"
+          style={{ transition: 'all 0.3s ease-out' }}
+        >
+          <div className={`flex items-center gap-3 px-4 py-4 rounded-[1.5rem] shadow-2xl border backdrop-blur-md ${
+            toast.type === 'success' 
+              ? 'bg-emerald-500/95 text-white border-emerald-400/50' 
+              : 'bg-rose-500/95 text-white border-rose-400/50'
+          }`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              toast.type === 'success' ? 'bg-white/20' : 'bg-white/20'
+            }`}>
+              <i className={`fa-solid ${toast.type === 'success' ? 'fa-check' : 'fa-exclamation'} text-sm`}></i>
+            </div>
+            <p className="text-[11px] font-black uppercase tracking-wider flex-1 leading-tight">{toast.message}</p>
+            <button onClick={() => setToast({ ...toast, show: false })} className="w-8 h-8 rounded-full hover:bg-white/10 transition-colors">
+              <i className="fa-solid fa-xmark opacity-70"></i>
+            </button>
           </div>
         </div>
       )}
