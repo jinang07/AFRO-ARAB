@@ -283,8 +283,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
         </button>
       </div>
 
-      <div className="text-center pb-12 opacity-30">
-        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Build by Jinang Jain</p>
+      <div className="text-center pb-12 opacity-60">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">Build by Jinang Jain</p>
       </div>
 
       {/* Supplier Profile Edit Modal */}
