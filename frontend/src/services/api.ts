@@ -92,6 +92,10 @@ class ApiService {
     return this.request(endpoint, { method: 'GET' });
   }
 
+  async exportBackup() {
+    return this.request('/export-backup/', { method: 'GET' });
+  }
+
   async post(endpoint: string, data: any) {
     const body = data instanceof FormData ? data : JSON.stringify(toSnake(data));
     return this.request(endpoint, { method: 'POST', body });

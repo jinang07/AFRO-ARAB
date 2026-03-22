@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Supplier, Buyer, Order, User, Notification, FCMToken
 from .serializers import SupplierSerializer, BuyerSerializer, OrderSerializer, UserSerializer, NotificationSerializer, FCMTokenSerializer
+from rest_framework.views import APIView
 from django.db import transaction, models
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
@@ -374,3 +375,26 @@ class FCMTokenViewSet(viewsets.ModelViewSet):
         FCMToken.objects.filter(token=token).delete()
         serializer.save(user=self.request.user)
 
+
+class ExportBackupView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        suppliers = Supplier.objects.all()
+        buyers = Buyer.objects.all()
+        orders = Order.objects.all()
+        users = User.objects.all()
+
+        data = {
+            'suppliers': SupplierSerializer(suppliers, many=True).data,
+            'buyers': BuyerSerializer(buyers, many=True).data,
+            'orders': OrderSerializer(orders, many=True).data,
+            'users': UserSerializer(users, many=True).data,
+            'backup_date': models.DateTimeField().auto_now_add
+        }
+        
+        # Use a more reliable way to get the current time for the backup
+        from django.utils import timezone
+        data['backup_date'] = timezone.now().isoformat()
+        
+        return Response(data)

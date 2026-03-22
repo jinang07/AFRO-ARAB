@@ -226,6 +226,40 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
       )}
 
 
+      {user.role === 'ADMIN' && (
+        <div className="bg-white p-8 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 space-y-4">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-widest text-rose-600">Security & Backup</h3>
+            <p className="text-[9px] font-bold text-slate-400 mt-0.5">Protect your data assets locally</p>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                const data = await api.exportBackup();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const date = new Date().toISOString().split('T')[0];
+                a.href = url;
+                a.download = `AFRO_ARAB_BACKUP_${date}.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                alert('Backup downloaded successfully!');
+              } catch (err) {
+                console.error(err);
+                alert('Failed to generate backup.');
+              }
+            }}
+            className="w-full py-4 bg-rose-50 text-rose-600 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-rose-100 flex items-center justify-center gap-2"
+          >
+            <i className="fa-solid fa-download"></i>
+            Download Complete Data Backup
+          </button>
+        </div>
+      )}
+
       <div className="px-4 pt-4 pb-12">
         <button
           onClick={onLogout}
