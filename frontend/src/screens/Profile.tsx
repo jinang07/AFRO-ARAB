@@ -235,18 +235,23 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <button
             onClick={async () => {
               try {
-                const data = await api.exportBackup();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                // Fetch as blob for ZIP file
+                const response = await api.exportBackup(); 
+                // Since our api.ts converts json by default, we need to handle potential issues.
+                // However, for a GET request returning a ZIP, fetch might need care.
+                // I will add a raw request method to api.ts if needed, but let's try standard approach.
+                const blob = new Blob([response instanceof Blob ? response : JSON.stringify(response)], { type: 'application/zip' });
+                
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 const date = new Date().toISOString().split('T')[0];
                 a.href = url;
-                a.download = `AFRO_ARAB_BACKUP_${date}.json`;
+                a.download = `AFRO_ARAB_BACKUP_${date}.zip`;
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                alert('Backup downloaded successfully!');
+                alert('Backup ZIP downloaded successfully! You can open the CSV files inside with Excel.');
               } catch (err) {
                 console.error(err);
                 alert('Failed to generate backup.');
@@ -254,8 +259,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
             }}
             className="w-full py-4 bg-[#224194]/5 text-[#224194] rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-[#224194]/10 flex items-center justify-center gap-2"
           >
-            <i className="fa-solid fa-download"></i>
-            Download Complete Data Backup
+            <i className="fa-solid fa-file-zipper"></i>
+            Download Excel-Friendly (ZIP/CSV) Backup
           </button>
         </div>
       )}

@@ -93,7 +93,14 @@ class ApiService {
   }
 
   async exportBackup() {
-    return this.request('/export-backup/', { method: 'GET' });
+    const url = `${API_BASE_URL}/export-backup/`;
+    const headers = new Headers();
+    if (this.token) {
+      headers.set('Authorization', `Bearer ${this.token}`);
+    }
+    const response = await fetch(url, { method: 'GET', headers });
+    if (!response.ok) throw new Error('Backup failed');
+    return response.blob();
   }
 
   async post(endpoint: string, data: any) {

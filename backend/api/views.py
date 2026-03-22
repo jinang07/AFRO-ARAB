@@ -8,6 +8,11 @@ from rest_framework.views import APIView
 from django.db import transaction, models
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
+from django.http import HttpResponse
+import csv
+import io
+import zipfile
+from django.utils import timezone
 
 class IsAdminUser(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -380,21 +385,56 @@ class ExportBackupView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        suppliers = Supplier.objects.all()
-        buyers = Buyer.objects.all()
-        orders = Order.objects.all()
-        users = User.objects.all()
+        # Create an in-memory zip file
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
+            # 1. Export Orders
+            orders_buffer = io.StringIO()
+            writer = csv.writer(orders_buffer)
+            writer.writerow(['ID', 'Readable ID', 'Buyer', 'Supplier', 'Status', 'Product', 'Quantity', 'Address', 'Created At', 'Expected Delivery'])
+            for order in Order.objects.all():
+                writer.writerow([
+                    order.id, 
+                    order.readable_id, 
+                    order.buyer.company_name if order.buyer else 'N/A',
+                    order.supplier.company_name if order.supplier else 'N/A',
+                    order.status,
+                    order.product_name,
+                    order.quantity,
+                    order.delivery_address,
+                    order.created_at,
+                    order.expected_delivery_date
+                ])
+            zip_file.writestr('orders.csv', orders_buffer.getvalue())
 
-        data = {
-            'suppliers': SupplierSerializer(suppliers, many=True).data,
-            'buyers': BuyerSerializer(buyers, many=True).data,
-            'orders': OrderSerializer(orders, many=True).data,
-            'users': UserSerializer(users, many=True).data,
-            'backup_date': models.DateTimeField().auto_now_add
-        }
+            # 2. Export Suppliers
+            suppliers_buffer = io.StringIO()
+            writer = csv.writer(suppliers_buffer)
+            writer.writerow(['ID', 'Company Name', 'Personal Name', 'Mobile', 'Email', 'City', 'State', 'Category', 'GST', 'PAN'])
+            for s in Supplier.objects.all():
+                writer.writerow([s.id, s.company_name, s.personal_name, s.mobile_number, s.email, s.city, s.state, s.business_category, s.gst_number, s.pan_number])
+            zip_file.writestr('suppliers.csv', suppliers_buffer.getvalue())
+
+            # 3. Export Buyers
+            buyers_buffer = io.StringIO()
+            writer = csv.writer(buyers_buffer)
+            writer.writerow(['ID', 'Company Name', 'Country', 'Product Need', 'Quantity', 'Target Price', 'Created At'])
+            for b in Buyer.objects.all():
+                writer.writerow([b.id, b.company_name, b.country, b.product_need, b.required_quantity, b.target_price, b.created_at])
+            zip_file.writestr('buyers.csv', buyers_buffer.getvalue())
+
+            # 4. Export Users
+            users_buffer = io.StringIO()
+            writer = csv.writer(users_buffer)
+            writer.writerow(['ID', 'Username', 'Email', 'Role', 'Status'])
+            for u in User.objects.all():
+                writer.writerow([u.id, u.username, u.email, u.role, 'Active' if u.is_active else 'Inactive'])
+            zip_file.writestr('users.csv', users_buffer.getvalue())
+
+        # Set up the response
+        date_str = timezone.now().strftime('%Y-%m-%d')
+        filename = f"AFRO_ARAB_BACKUP_{date_str}.zip"
         
-        # Use a more reliable way to get the current time for the backup
-        from django.utils import timezone
-        data['backup_date'] = timezone.now().isoformat()
-        
-        return Response(data)
+        response = HttpResponse(buffer.getvalue(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
