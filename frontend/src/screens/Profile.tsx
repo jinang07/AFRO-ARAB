@@ -250,31 +250,45 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <button
             onClick={async () => {
               try {
-                // Now returns a proper Blob directly
+                showToast('Generating backup...', 'info');
                 const blob = await api.exportBackup(); 
+                
+                if (!blob || (blob as Blob).size === 0) {
+                  throw new Error('Backup file is empty or invalid.');
+                }
+
                 const date = new Date().toISOString().split('T')[0];
                 const fileName = `AFRO_ARAB_BACKUP_${date}.zip`;
                 
                 if (Capacitor.getPlatform() !== 'web') {
                   // Mobile logic: Save to filesystem and share
                   const reader = new FileReader();
-                  reader.readAsDataURL(blob as Blob);
-                  reader.onloadend = async () => {
-                    const base64data = (reader.result as string).split(',')[1];
-                    const tempFile = await Filesystem.writeFile({
-                      path: fileName,
-                      data: base64data,
-                      directory: Directory.Cache
-                    });
+                  
+                  const base64Promise = new Promise<string>((resolve, reject) => {
+                    reader.onloadend = () => {
+                      const base64data = (reader.result as string).split(',')[1];
+                      resolve(base64data);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob as Blob);
+                  });
 
-                    await Share.share({
-                      title: 'Afro Arab Data Backup',
-                      text: 'Platform data backup (ZIP/CSV)',
-                      url: tempFile.uri,
-                      dialogTitle: 'Save Backup'
-                    });
-                    showToast('Backup ready to save/share!', 'success');
-                  };
+                  const base64data = await base64Promise;
+                  
+                  const tempFile = await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64data,
+                    directory: Directory.Cache
+                  });
+
+                  await Share.share({
+                    title: 'Afro Arab Data Backup',
+                    text: 'Platform data backup (ZIP/CSV)',
+                    url: tempFile.uri,
+                    dialogTitle: 'Save Backup'
+                  });
+                  
+                  showToast('Backup ready! Please choose where to save.', 'success');
                 } else {
                   // Web logic: Standard link download
                   const url = window.URL.createObjectURL(blob as Blob);
@@ -288,8 +302,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
                   showToast('Backup ZIP downloaded successfully!', 'success');
                 }
               } catch (err: any) {
-                console.error(err);
-                showToast('Failed to generate backup: ' + (err.message || 'Unknown error'), 'error');
+                console.error('Backup Error:', err);
+                showToast('Backup Error: ' + (err.message || 'Check connection'), 'error');
               }
             }}
             className="w-full py-4 bg-[#224194]/5 text-[#224194] rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all border border-[#224194]/10 flex items-center justify-center gap-2"
