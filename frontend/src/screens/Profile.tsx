@@ -273,7 +273,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
         </div>
       )}
 
-      <div className="px-4 pt-4 pb-12">
+      <div className="px-4 pt-4">
         <button
           onClick={onLogout}
           className="w-full py-5 rounded-[2rem] bg-white border-2 border-rose-100 text-rose-600 font-black uppercase tracking-widest text-[11px] hover:bg-rose-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-rose-600/5 active:scale-95"
@@ -281,6 +281,10 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <i className="fa-solid fa-power-off"></i>
           Secure Sign Out
         </button>
+      </div>
+
+      <div className="text-center pb-12 opacity-30">
+        <p className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-400">Build by Jinang Jain</p>
       </div>
 
       {/* Supplier Profile Edit Modal */}
