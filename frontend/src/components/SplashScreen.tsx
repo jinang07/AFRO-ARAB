@@ -1,8 +1,12 @@
 import React from 'react';
 
-const SplashScreen: React.FC = () => {
+interface SplashScreenProps {
+  isFading?: boolean;
+}
+
+const SplashScreen: React.FC<SplashScreenProps> = ({ isFading }) => {
   return (
-    <div className="fixed inset-0 z-[999] bg-white flex flex-col items-center justify-center overflow-hidden">
+    <div className={`fixed inset-0 z-[999] bg-white flex flex-col items-center justify-center overflow-hidden transition-all duration-700 ease-in-out ${isFading ? 'opacity-0 scale-95' : 'opacity-100'}`}>
       {/* Background soft gradients for a premium feel */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-50">
         <div className="absolute top-[-10%] right-[-10%] w-[120%] h-[50%] bg-gradient-to-b from-[#224194]/10 to-transparent blur-3xl animate-pulse duration-[4000ms]"></div>

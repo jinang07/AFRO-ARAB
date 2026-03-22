@@ -24,6 +24,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [activeScreen, setActiveScreen] = useState<AppScreen>(AppScreen.Dashboard);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isSplashFading, setIsSplashFading] = useState(false);
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const shownNotificationIds = useRef<Set<number>>(new Set());
@@ -49,6 +50,24 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initAuth = async () => {
+      let authDone = false;
+      let timerDone = false;
+
+      const finishSplash = () => {
+        if (authDone && timerDone) {
+          setIsSplashFading(true);
+          setTimeout(() => {
+            setIsInitializing(false);
+          }, 700); // Match Tailwind duration-700
+        }
+      };
+
+      // Minimum splash time of 2.5 seconds
+      setTimeout(() => {
+        timerDone = true;
+        finishSplash();
+      }, 2500);
+
       const token = localStorage.getItem('access_token');
       if (token) {
         try {
@@ -60,7 +79,8 @@ const App: React.FC = () => {
           api.setToken(null);
         }
       }
-      setIsInitializing(false);
+      authDone = true;
+      finishSplash();
     };
 
     const initPush = async () => {
@@ -173,7 +193,7 @@ const App: React.FC = () => {
   };
 
   if (isInitializing) {
-    return <SplashScreen />;
+    return <SplashScreen isFading={isSplashFading} />;
   }
 
   if (!user) {
