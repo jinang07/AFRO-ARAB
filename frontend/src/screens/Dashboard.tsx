@@ -52,7 +52,7 @@ const Dashboard: React.FC<{ user: User; setActiveScreen: (screen: AppScreen) => 
         orderCount: ordersRes.length,
       });
 
-      setRecentOrders(ordersRes.slice(0, 5));
+      setRecentOrders(ordersRes.slice(0, 3));
 
     } catch (err) {
       console.error('Failed to fetch dashboard stats', err);
