@@ -25,6 +25,7 @@ const App: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState<AppScreen>(AppScreen.Dashboard);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isSplashFading, setIsSplashFading] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('Initializing Portal');
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const shownNotificationIds = useRef<Set<number>>(new Set());
@@ -50,37 +51,35 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initAuth = async () => {
-      let authDone = false;
-      let timerDone = false;
-
-      const finishSplash = () => {
-        if (authDone && timerDone) {
-          setIsSplashFading(true);
-          setTimeout(() => {
-            setIsInitializing(false);
-          }, 700); // Match Tailwind duration-700
-        }
-      };
-
-      // Minimum splash time of 2.5 seconds
-      setTimeout(() => {
-        timerDone = true;
-        finishSplash();
-      }, 2500);
-
+      const startTime = Date.now();
       const token = localStorage.getItem('access_token');
+      
+      setLoadingStatus('Checking Security Token');
+      
       if (token) {
         try {
+          setLoadingStatus('Authenticating Session');
           const userData = await api.get('/users/me/');
           setUser(userData);
+          
+          setLoadingStatus('Syncing Notifications');
           fetchNotifications();
         } catch (err) {
           console.error('Failed to restore session', err);
           api.setToken(null);
         }
       }
-      authDone = true;
-      finishSplash();
+
+      setLoadingStatus('Ready');
+      
+      // Ensure at least 1.0s of splash screen for a smooth experience
+      const elapsedTime = Date.now() - startTime;
+      const minDuration = 1000;
+      if (elapsedTime < minDuration) {
+        await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
+      }
+      
+      setIsInitializing(false);
     };
 
     const initPush = async () => {
@@ -193,7 +192,7 @@ const App: React.FC = () => {
   };
 
   if (isInitializing) {
-    return <SplashScreen isFading={isSplashFading} />;
+    return <SplashScreen status={loadingStatus} />;
   }
 
   if (!user) {
