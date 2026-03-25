@@ -6,7 +6,7 @@ android {
 
     signingConfigs {
         release {
-            storeFile file("../afroarab-release-key.jks")
+            storeFile rootProject.file("afroarab-release-key.jks")
             storePassword "AfroArab@2024"
             keyAlias "afroarab"
             keyPassword "AfroArab@2024"
@@ -17,7 +17,7 @@ android {
         applicationId "com.afroarab.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
+        versionCode 5
         versionName "1.1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

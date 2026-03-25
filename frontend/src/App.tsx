@@ -54,27 +54,34 @@ const App: React.FC = () => {
       const startTime = Date.now();
       const token = localStorage.getItem('access_token');
       
+      // Deliberate sequence for a premium feel
+      setLoadingStatus('Initializing System');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       setLoadingStatus('Checking Security Token');
+      await new Promise(resolve => setTimeout(resolve, 600));
       
       if (token) {
         try {
           setLoadingStatus('Authenticating Session');
           const userData = await api.get('/users/me/');
           setUser(userData);
+          await new Promise(resolve => setTimeout(resolve, 600));
           
           setLoadingStatus('Syncing Notifications');
           fetchNotifications();
+          await new Promise(resolve => setTimeout(resolve, 600));
         } catch (err) {
           console.error('Failed to restore session', err);
           api.setToken(null);
         }
       }
 
-      setLoadingStatus('Ready');
+      setLoadingStatus('Preparing Dashboard');
       
-      // Ensure at least 1.0s of splash screen for a smooth experience
+      // Ensure at least 3.0s of splash screen for a smooth experience
       const elapsedTime = Date.now() - startTime;
-      const minDuration = 1000;
+      const minDuration = 3000;
       if (elapsedTime < minDuration) {
         await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
       }
