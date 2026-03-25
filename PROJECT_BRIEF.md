@@ -1,8 +1,13 @@
-# Afro-Arab Architect - Project Brief (v2.0)
+# Afro-Arab Architect - Project Brief (v3.0) - LIVE
 
 ## 1. Project Overview
 **Name:** Afro-Arab Architect  
 **Purpose:** A high-performance B2B supply chain management system connecting Admins, Regional Agents, Suppliers, and Associate Partners. It facilitates the end-to-end trade lifecycle — from quotation to commission — with robust RBAC, real-time notifications, and mobile support.
+
+### 🚀 Production Status
+- **Backend Server:** [Live on VPS]
+- **Android App:** [Published on Google Play Store (v4)]
+- **iOS App:** Capacitor Integration Complete (Distribution Ready)
 
 ---
 
@@ -79,6 +84,9 @@ AABA_FINAL/
 - **Lead Visibility & Search**: Implemented role-based lead visibility and added searching by detailed product requirements in the Buyer Registry.
 - **Security Logic (IDOR Fix)**: Implemented backend object-level permission checks. Agents can only modify leads they created or are assigned to.
 - **Theme Refinement**: Updated document management sections to a professional Indigo theme and removed legacy red/rose branding from supplier views.
+- **iOS & Xcode Optimization**: Configured project for iOS deployment via Capacitor, including signing and provisioning setup for App Store distribution.
+- **Splash Screen Revamp**: Implemented high-performance animations and smooth transitions for the mobile launch experience.
+- **Production Stabilization**: Finalized PostgreSQL migration and environment configuration for live VPS deployment.
 
 ## 7. Project Cleanup & Migration
 - **Restructuring:** Segregated frontend and backend into dedicated top-level directories.

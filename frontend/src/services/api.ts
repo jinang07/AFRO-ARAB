@@ -74,6 +74,12 @@ class ApiService {
     const response = await fetch(url, {
       ...options,
       headers,
+    }).catch(err => {
+      const errorMsg = `Network Error: ${err.message || 'Could not connect to server'}`;
+      if (typeof window !== 'undefined' && (window as any).Capacitor) {
+        console.error('API FETCH ERROR:', errorMsg, 'URL:', url);
+      }
+      throw new Error(errorMsg);
     });
 
     if (response.status === 401) {
@@ -83,7 +89,11 @@ class ApiService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || 'API Request Failed');
+      const detail = errorData.detail || errorData.error || `Error ${response.status}: ${response.statusText}`;
+      if (typeof window !== 'undefined' && (window as any).Capacitor) {
+        console.error('API RESPONSE ERROR:', detail, 'Status:', response.status);
+      }
+      throw new Error(detail);
     }
 
     if (response.status === 204) return null;

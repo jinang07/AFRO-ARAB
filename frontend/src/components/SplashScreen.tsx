@@ -16,11 +16,11 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ status = 'Initializing Port
       <div className="relative z-10 flex flex-col items-center justify-between h-full py-20">
         <div className="flex-1 flex flex-col items-center justify-center">
           {/* Animated Logo Container */}
-          <div className="bg-white p-8 rounded-[3rem] shadow-2xl flex items-center justify-center mb-10 w-56 h-48 transform animate-in fade-in zoom-in duration-1000 ease-out border border-slate-50">
+          <div className="bg-white/80 backdrop-blur-md px-10 py-6 rounded-[2.5rem] shadow-2xl flex items-center justify-center mb-10 w-full max-w-[320px] transform animate-in fade-in zoom-in duration-1000 ease-out border border-white/50">
             <img 
               src="/logo.jpeg" 
               alt="AFRO ARAB Logo" 
-              className="w-full h-full object-contain animate-pulse duration-[2000ms]"
+              className="w-full h-auto max-h-28 object-contain animate-pulse duration-[2000ms]"
             />
           </div>
 

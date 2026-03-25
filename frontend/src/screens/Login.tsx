@@ -338,12 +338,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
 
       {/* Header Branding */}
       <div className="w-full flex flex-col items-center px-6 mb-6 relative z-10 animate-in fade-in slide-in-from-top duration-700">
-        <div className="bg-white p-8 rounded-[3rem] shadow-2xl flex items-center justify-center mb-4 w-56 h-48 transform hover:scale-110 transition-transform duration-500 overflow-hidden border border-slate-50">
-          <img src="/logo.jpeg" alt="AFRO ARAB Logo" className="w-full h-full object-contain" />
+        <div className="bg-white/80 backdrop-blur-md px-8 py-4 rounded-[2rem] shadow-xl flex items-center justify-center mb-4 w-full max-w-[280px] transform hover:scale-105 transition-transform duration-500 overflow-hidden border border-white/50">
+          <img src="/logo.jpeg" alt="AFRO ARAB Logo" className="w-full h-auto max-h-24 object-contain" />
         </div>
         <div className="text-center space-y-1">
-          <p className="text-[10px] font-black text-[#224194] uppercase tracking-[0.4em] animate-in fade-in slide-in-from-bottom duration-1000 delay-300">AFRO ARAB</p>
-          <p className="text-[8px] font-medium text-slate-400 uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom duration-1000 delay-500">Globally Connected</p>
+          <p className="text-[11px] font-black text-[#224194] uppercase tracking-[0.4em] animate-in fade-in slide-in-from-bottom duration-1000 delay-300">AFRO ARAB</p>
+          <p className="text-[9px] font-semibold text-slate-400 uppercase tracking-[0.2em] animate-in fade-in slide-in-from-bottom duration-1000 delay-500">Business Association</p>
         </div>
       </div>
 
@@ -483,9 +483,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, initialRegistering = false }) =>
                 </div>
 
                 {error && (
-                  <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-[10px] text-rose-500 font-bold flex items-center gap-3">
-                    <i className="fa-solid fa-circle-exclamation"></i>
-                    {error}
+                  <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl text-[11px] text-rose-600 font-bold flex flex-col gap-1 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <i className="fa-solid fa-circle-exclamation text-rose-400"></i>
+                      <span>Authentication Error</span>
+                    </div>
+                    <p className="text-[10px] font-medium text-rose-500/80 leading-tight ml-6">{error}</p>
                   </div>
                 )}
 
