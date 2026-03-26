@@ -126,7 +126,7 @@ const App: React.FC = () => {
 
     window.addEventListener('unauthorized', handleUnauthorized);
     return () => window.removeEventListener('unauthorized', handleUnauthorized);
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     let interval: any;

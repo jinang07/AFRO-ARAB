@@ -67,35 +67,45 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
     }
   }, [user]);
 
+  const updateStateWithProfileData = (profile: any) => {
+    console.log('Incoming profile record from API:', profile);
+    setSupplierId(profile.id);
+    
+    // Explicitly define all fields to ensure no key is lost even if missing in response
+    const newBusinessData = {
+      companyName: profile.companyName || profile.company_name || user.name || user.username || '',
+      personalName: profile.personalName || profile.personal_name || '',
+      designation: profile.designation || '',
+      mobileNumber: profile.mobileNumber || profile.mobile_number || '',
+      telephoneNumber: profile.telephoneNumber || profile.telephone_number || '',
+      email: profile.email || user.email || '',
+      address: profile.address || '',
+      city: profile.city || '',
+      state: profile.state || '',
+      pinCode: profile.pinCode || profile.pin_code || '',
+      country: profile.country || '',
+      website: profile.website || '',
+      businessCategory: profile.businessCategory || profile.business_category || '',
+      iecCode: profile.iecCode || profile.iec_code || '',
+      gstNumber: profile.gstNumber || profile.gst_number || '',
+      panNumber: profile.panNumber || profile.pan_number || '',
+      turnover2y: profile.turnover2y || profile.turnover_2y || '',
+      productAvailable: profile.productAvailable || profile.product_available || '',
+      brochureFile: profile.brochureFile || profile.brochure_file || '',
+      password: '',
+      associatePartner: profile.associatePartner || profile.associate_partner || ''
+    };
+    
+    console.log('Final local businessData being set:', newBusinessData);
+    setBusinessData(newBusinessData);
+  };
+
   const fetchSupplierProfile = async () => {
     try {
+      setIsLoading(true);
       const data = await api.get('/suppliers/');
       if (data && data.length > 0) {
-        const profile = data[0];
-        setSupplierId(profile.id);
-        setBusinessData({
-          companyName: profile.company_name || profile.companyName || user.name,
-          personalName: profile.personal_name || profile.personalName || '',
-          designation: profile.designation || '',
-          mobileNumber: profile.mobile_number || profile.mobileNumber || '',
-          telephoneNumber: profile.telephone_number || profile.telephoneNumber || '',
-          email: profile.email || user.email || '',
-          address: profile.address || '',
-          city: profile.city || '',
-          state: profile.state || '',
-          pinCode: profile.pin_code || profile.pinCode || '',
-          country: profile.country || '',
-          website: profile.website || '',
-          businessCategory: profile.business_category || profile.businessCategory || '',
-          iecCode: profile.iec_code || profile.iecCode || '',
-          gstNumber: profile.gst_number || profile.gstNumber || '',
-          panNumber: profile.pan_number || profile.panNumber || '',
-          turnover2y: profile.turnover_2y || profile.turnover2y || '',
-          productAvailable: profile.product_available || profile.productAvailable || '',
-          brochureFile: profile.brochure_file || profile.brochureFile || '',
-          password: '',
-          associatePartner: profile.associate_partner || profile.associatePartner || ''
-        });
+        updateStateWithProfileData(data[0]);
       }
     } catch (err) {
       console.error('Failed to fetch supplier profile', err);
@@ -136,9 +146,12 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
         mapping.password = businessData.password;
       }
 
+      console.log('Submitting profile update payload:', mapping);
+
       // 2. Append text fields
       Object.keys(mapping).forEach(key => {
-        if (mapping[key] !== null && mapping[key] !== undefined && mapping[key] !== '') {
+        // Only skip if null or undefined. Empty strings should be sent to allow clearing fields.
+        if (mapping[key] !== null && mapping[key] !== undefined) {
           submitData.append(key, mapping[key]);
         }
       });
@@ -148,19 +161,33 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
         submitData.append('brochure_file', newBrochureFile);
       }
 
+      let response;
       if (supplierId) {
-        await api.put(`/suppliers/${supplierId}/`, submitData);
+        response = await api.put(`/suppliers/${supplierId}/`, submitData);
       } else {
         submitData.append('user', String(user.id));
-        await api.post('/suppliers/', submitData);
+        response = await api.post('/suppliers/', submitData);
       }
-      alert('Business profile updated successfully!');
+
+      console.log('Profile update response:', response);
+
+      if (response) {
+        // Update local state immediately with the response data
+        updateStateWithProfileData(response);
+      }
+
+      showToast('Business profile updated successfully!', 'success');
       setIsEditModalOpen(false);
       setNewBrochureFile(null);
-      fetchSupplierProfile();
+      
+      // Secondary fetch after a short delay to ensure backend consistency
+      setTimeout(() => {
+        fetchSupplierProfile();
+      }, 1000);
+
     } catch (err) {
-      console.error(err);
-      alert('Failed to update business profile.');
+      console.error('Update operation failed:', err);
+      showToast('Failed to update business profile.', 'error');
     }
   };
 
