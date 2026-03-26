@@ -42,12 +42,12 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ status = 'Initializing Port
           </div>
         </div>
 
-        {/* Loading Indicator at Bottom */}
-        <div className="flex flex-col items-center gap-4 animate-in fade-in duration-1000 delay-1000 fill-mode-both mt-auto">
-          <div className="flex gap-2">
-            <div className="w-2 h-2 rounded-full bg-[#224194] animate-bounce [animation-delay:-0.3s]"></div>
-            <div className="w-2 h-2 rounded-full bg-[#f49022] animate-bounce [animation-delay:-0.15s]"></div>
-            <div className="w-2 h-2 rounded-full bg-[#2e9782] animate-bounce"></div>
+        {/* Loading Indicator at Bottom - NOW SPRACED CORRECTLY */}
+        <div className="flex flex-col items-center gap-3 mt-16 animate-in fade-in duration-1000 delay-700 fill-mode-both">
+          <div className="flex gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#224194] animate-bounce [animation-delay:-0.3s]"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#f49022] animate-bounce [animation-delay:-0.15s]"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#2e9782] animate-bounce"></div>
           </div>
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] opacity-40">{status}</span>
         </div>
