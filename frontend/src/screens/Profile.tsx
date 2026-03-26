@@ -12,9 +12,10 @@ interface ProfileProps {
   fetchNotifications: () => void;
   markAllAsRead: () => void;
   clearAllNotifications: () => void;
+  refreshUser: () => Promise<void>;
 }
 
-const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications, markAllAsRead, clearAllNotifications }) => {
+const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchNotifications, markAllAsRead, clearAllNotifications, refreshUser }) => {
   const initials = (user.firstName || user.name || user.username).substring(0, 2).toUpperCase();
   const isSupplier = user.role === 'SUPPLIER';
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -183,6 +184,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
       // Secondary fetch after a short delay to ensure backend consistency
       setTimeout(() => {
         fetchSupplierProfile();
+        refreshUser();
       }, 1000);
 
     } catch (err) {
@@ -214,7 +216,9 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, notifications, fetchN
           <div className="absolute bottom-[-5px] right-[-5px] w-8 h-8 bg-emerald-500 border-4 border-white rounded-full"></div>
         </div>
 
-        <h2 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tight">{user.firstName ? `${user.firstName} ${user.lastName || ''}` : user.name || user.username}</h2>
+        <h2 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tight">
+          {businessData.personalName || user.firstName ? `${businessData.personalName || user.firstName} ${user.lastName || ''}` : user.name || user.username}
+        </h2>
         <p className="text-slate-500 text-sm font-medium mb-4">{user.email}</p>
 
         <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${user.role === 'ADMIN' ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-[#224194]/10 text-[#224194] border-blue-200'

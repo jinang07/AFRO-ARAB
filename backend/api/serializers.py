@@ -61,10 +61,36 @@ class SupplierSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
-        # Update user password if provided
-        if password and instance.user:
-            instance.user.set_password(password)
-            instance.user.save()
+        
+        # Sync to User model
+        if instance.user:
+            user_updated = False
+            
+            # 1. Handle Password
+            if password:
+                instance.user.set_password(password)
+                user_updated = True
+            
+            # 2. Handle Personal Name -> first_name
+            personal_name = validated_data.get('personal_name')
+            if personal_name is not None:
+                instance.user.first_name = personal_name
+                user_updated = True
+                
+            # 3. Handle Mobile Number -> username (Login Credential)
+            mobile_number = validated_data.get('mobile_number')
+            if mobile_number is not None:
+                instance.user.username = mobile_number
+                user_updated = True
+                
+            # 4. Handle Email
+            email = validated_data.get('email')
+            if email is not None:
+                instance.user.email = email
+                user_updated = True
+                
+            if user_updated:
+                instance.user.save()
             
         return super().update(instance, validated_data)
 

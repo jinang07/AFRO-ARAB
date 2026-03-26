@@ -49,56 +49,66 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const refreshUser = async () => {
+    const token = api.getToken();
+    if (token) {
+      try {
+        const userData = await api.get('/users/me/');
+        setUser(userData);
+        fetchNotifications();
+      } catch (err) {
+        console.error('Auth refresh failed', err);
+        setUser(null);
+        api.setToken(null);
+      }
+    }
+  };
+
+  const initAuthAndSplash = async () => {
+    const startTime = Date.now();
+    const token = localStorage.getItem('access_token');
+    
+    setLoadingStatus('Initializing System');
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    setLoadingStatus('Checking Security Token');
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    if (token) {
+      try {
+        setLoadingStatus('Authenticating Session');
+        await refreshUser();
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
+        setLoadingStatus('Syncing Notifications');
+        await new Promise(resolve => setTimeout(resolve, 600));
+      } catch (err) {
+        console.error('Failed to restore session', err);
+        api.setToken(null);
+      }
+    }
+
+    setLoadingStatus('Preparing Dashboard');
+    
+    const elapsedTime = Date.now() - startTime;
+    const minDuration = 3000;
+    if (elapsedTime < minDuration) {
+      await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
+    }
+    
+    setIsInitializing(false);
+  };
+
   useEffect(() => {
-    const initAuth = async () => {
-      const startTime = Date.now();
-      const token = localStorage.getItem('access_token');
-      
-      // Deliberate sequence for a premium feel
-      setLoadingStatus('Initializing System');
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      setLoadingStatus('Checking Security Token');
-      await new Promise(resolve => setTimeout(resolve, 600));
-      
-      if (token) {
-        try {
-          setLoadingStatus('Authenticating Session');
-          const userData = await api.get('/users/me/');
-          setUser(userData);
-          await new Promise(resolve => setTimeout(resolve, 600));
-          
-          setLoadingStatus('Syncing Notifications');
-          fetchNotifications();
-          await new Promise(resolve => setTimeout(resolve, 600));
-        } catch (err) {
-          console.error('Failed to restore session', err);
-          api.setToken(null);
-        }
-      }
-
-      setLoadingStatus('Preparing Dashboard');
-      
-      // Ensure at least 3.0s of splash screen for a smooth experience
-      const elapsedTime = Date.now() - startTime;
-      const minDuration = 3000;
-      if (elapsedTime < minDuration) {
-        await new Promise(resolve => setTimeout(resolve, minDuration - elapsedTime));
-      }
-      
-      setIsInitializing(false);
-    };
-
     const initPush = async () => {
       if (Capacitor.getPlatform() === 'web') return;
 
       try {
-        let permStatus = await PushNotifications.checkPermissions();
-        if (permStatus.receive === 'prompt') {
-          permStatus = await PushNotifications.requestPermissions();
+        const status = await PushNotifications.checkPermissions();
+        if (status.receive !== 'granted') {
+          const permStatus = await PushNotifications.requestPermissions();
+          if (permStatus.receive !== 'granted') return;
         }
-
-        if (permStatus.receive !== 'granted') return;
 
         await PushNotifications.register();
 
@@ -106,7 +116,7 @@ const App: React.FC = () => {
           await api.post('/fcm-tokens/', { token: token.value });
         });
 
-        await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        await PushNotifications.addListener('pushNotificationReceived', () => {
           fetchNotifications();
         });
 
@@ -121,7 +131,7 @@ const App: React.FC = () => {
       api.setToken(null);
     };
 
-    initAuth();
+    initAuthAndSplash();
     if (user) initPush();
 
     window.addEventListener('unauthorized', handleUnauthorized);
@@ -214,7 +224,7 @@ const App: React.FC = () => {
       case AppScreen.Orders: return <Orders user={user} />;
       case AppScreen.Reports: return <Reports user={user} />;
       case AppScreen.Agents: return <Agents user={user} />;
-      case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
+      case AppScreen.Profile: return <Profile user={user} onLogout={handleLogout} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} refreshUser={refreshUser} />;
       case AppScreen.Notifications: return <NotificationsScreen user={user} notifications={notifications} fetchNotifications={fetchNotifications} markAllAsRead={markAllAsRead} clearAllNotifications={clearAllNotifications} />;
       default: return <Dashboard user={user} setActiveScreen={setActiveScreen} />;
     }

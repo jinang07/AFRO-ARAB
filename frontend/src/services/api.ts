@@ -54,6 +54,10 @@ class ApiService {
     }
   }
 
+  getToken() {
+    return this.token;
+  }
+
   async request(endpoint: string, options: RequestInit = {}, isBlob: boolean = false) {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = new Headers(options.headers || {});
