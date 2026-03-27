@@ -105,84 +105,94 @@ class SupplierViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[permissions.AllowAny])
     def register(self, request):
-        with transaction.atomic():
-            data = request.data
-            
-            # Use mobile_number as username for suppliers
-            mobile_number = data.get('mobile_number')
-            password = data.get('password')
-            
-            if not mobile_number:
-                return Response({'error': 'Mobile number is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
-            if not password:
-                return Response({'error': 'Password is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
-
-            username = mobile_number
-
-            if User.objects.filter(username=username).exists():
-                return Response({'error': 'A user with this mobile number already exists'}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Create User
-            user = User.objects.create(
-                username=username,
-                email=data.get('email', ''),
-                first_name=data.get('personal_name', ''),
-                role='SUPPLIER',
-                is_active=False # Pending approval
-            )
-            
-            user.set_password(password)
-            user.save()
-
-            # Files are handled by DRF in request.FILES or request.data depending on configuration, 
-            # for multipart/form-data both can be accessed via request.data or request.FILES.
-            # We'll check request.FILES explicitly just in case.
-            files = request.FILES
-            
-            # Create Supplier
-            supplier = Supplier.objects.create(
-                user=user,
-                company_name=data.get('company_name'),
-                personal_name=data.get('personal_name'),
-                designation=data.get('designation'),
-                mobile_number=data.get('mobile_number'),
-                telephone_number=data.get('telephone_number'),
-                email=data.get('email'),
-                address=data.get('address'),
-                city=data.get('city'),
-                state=data.get('state'),
-                pin_code=data.get('pin_code'),
-                country=data.get('country'),
-                website=data.get('website'),
-                business_category=data.get('business_category'),
-                iec_code=data.get('iec_code'),
-                gst_number=data.get('gst_number'),
-                pan_number=data.get('pan_number'),
-                turnover_2y=data.get('turnover_2y'),
-                product_available=data.get('product_available'),
+        try:
+            with transaction.atomic():
+                data = request.data
                 
-                # Bank Details
-                account_name=data.get('account_name'),
-                account_number=data.get('account_number'),
-                branch=data.get('branch'),
-                ifsc_code=data.get('ifsc_code'),
+                # Use mobile_number as username for suppliers
+                mobile_number = data.get('mobile_number')
+                password = data.get('password')
                 
-                # Files
-                brochure_file=files.get('brochure_file') or data.get('brochure_file'),
-                payment_screenshot=files.get('payment_screenshot') or data.get('payment_screenshot'),
-                
-                # Relations
-                associate_partner=data.get('associate_partner'),
-                
-                status='PENDING'
-            )
-            
-            # Notify Admins
-            admins = User.objects.filter(role='ADMIN')
-            for admin in admins:
-                notify_user(admin, f"New Supplier Registration: {supplier.company_name} - Awaiting Vetting.", type='WARNING')
+                if not mobile_number:
+                    return Response({'error': 'Mobile number is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
+                if not password:
+                    return Response({'error': 'Password is required for registration'}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response(SupplierSerializer(supplier).data, status=status.HTTP_201_CREATED)
+                username = mobile_number
+
+                if User.objects.filter(username=username).exists():
+                    return Response({'error': 'A user with this mobile number already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+                # Create User
+                user = User.objects.create(
+                    username=username,
+                    email=data.get('email', ''),
+                    first_name=data.get('personal_name', ''),
+                    role='SUPPLIER',
+                    is_active=False # Pending approval
+                )
+                
+                user.set_password(password)
+                user.save()
+
+                # Files are handled by DRF in request.FILES or request.data depending on configuration, 
+                # for multipart/form-data both can be accessed via request.data or request.FILES.
+                # We'll check request.FILES explicitly just in case.
+                files = request.FILES
+                
+                # Create Supplier
+                supplier = Supplier.objects.create(
+                    user=user,
+                    company_name=data.get('company_name'),
+                    personal_name=data.get('personal_name'),
+                    designation=data.get('designation'),
+                    mobile_number=data.get('mobile_number'),
+                    telephone_number=data.get('telephone_number'),
+                    email=data.get('email'),
+                    address=data.get('address'),
+                    city=data.get('city'),
+                    state=data.get('state'),
+                    pin_code=data.get('pin_code'),
+                    country=data.get('country'),
+                    website=data.get('website'),
+                    business_category=data.get('business_category'),
+                    iec_code=data.get('iec_code'),
+                    gst_number=data.get('gst_number'),
+                    pan_number=data.get('pan_number'),
+                    turnover_2y=data.get('turnover_2y'),
+                    product_available=data.get('product_available'),
+                    
+                    # Bank Details
+                    account_name=data.get('account_name'),
+                    account_number=data.get('account_number'),
+                    branch=data.get('branch'),
+                    ifsc_code=data.get('ifsc_code'),
+                    
+                    # Files
+                    brochure_file=files.get('brochure_file') or data.get('brochure_file'),
+                    payment_screenshot=files.get('payment_screenshot') or data.get('payment_screenshot'),
+                    
+                    # Relations
+                    associate_partner=data.get('associate_partner'),
+                    
+                    status='PENDING'
+                )
+                
+                # Notify Admins
+                admins = User.objects.filter(role='ADMIN')
+                for admin in admins:
+                    notify_user(admin, f"New Supplier Registration: {supplier.company_name} - Awaiting Vetting.", type='WARNING')
+
+                return Response(SupplierSerializer(supplier).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
+            print(error_trace) # Log to server console
+            return Response({
+                'error': str(e), 
+                'traceback': error_trace,
+                'message': 'An unexpected error occurred during registration. Please report this traceback.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class BuyerViewSet(viewsets.ModelViewSet):
     serializer_class = BuyerSerializer
