@@ -54,6 +54,26 @@ const App: React.FC = () => {
     if (token) {
       try {
         const userData = await api.get('/users/me/');
+        
+        // --- Temporary Frontend Sync Fallback ---
+        // Since the backend sync update is not deployed yet, we manually
+        // fetch the detailed profile to extract the personal name so that 
+        // the Dashboard and Header bindings (which rely on user.firstName) are correct.
+        if (userData.role === 'SUPPLIER') {
+          try {
+            const suppliersRes = await api.get('/suppliers/');
+            if (Array.isArray(suppliersRes) && suppliersRes.length > 0) {
+              const profile = suppliersRes.find((s: any) => s.user === userData.id || s.userId === userData.id) || suppliersRes[0];
+              if (profile && profile.personalName) {
+                userData.firstName = profile.personalName;
+              }
+            }
+          } catch (e) {
+            console.error('Failed to fetch supplier profile for sync fallback', e);
+          }
+        }
+        // ----------------------------------------
+
         setUser(userData);
         fetchNotifications();
       } catch (err) {
@@ -63,6 +83,7 @@ const App: React.FC = () => {
       }
     }
   };
+
 
   const initAuthAndSplash = async () => {
     const startTime = Date.now();
