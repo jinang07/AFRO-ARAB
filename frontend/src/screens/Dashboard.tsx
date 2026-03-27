@@ -17,6 +17,7 @@ const Dashboard: React.FC<{ user: User; setActiveScreen: (screen: AppScreen) => 
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [dashboardName, setDashboardName] = useState('');
 
   useEffect(() => {
     if (!isPendingSupplier) {
@@ -54,6 +55,14 @@ const Dashboard: React.FC<{ user: User; setActiveScreen: (screen: AppScreen) => 
 
       setRecentOrders(ordersRes.slice(0, 3));
 
+      // Extract supplier personal name if applicable for the greeting
+      if (user.role === 'SUPPLIER' && Array.isArray(suppliersRes) && suppliersRes.length > 0) {
+        const profile = suppliersRes.find((s: any) => s.user === user.id || s.userId === user.id) || suppliersRes[0];
+        if (profile && profile.personalName) {
+           setDashboardName(profile.personalName);
+        }
+      }
+
     } catch (err) {
       console.error('Failed to fetch dashboard stats', err);
     } finally {
@@ -66,7 +75,7 @@ const Dashboard: React.FC<{ user: User; setActiveScreen: (screen: AppScreen) => 
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-[#224194] p-8 rounded-[3rem] text-white shadow-xl shadow-[#224194]/20 overflow-hidden relative">
         <div className="relative z-10">
-          <h2 className="text-3xl font-black mb-1"> Hello, {(user.firstName || user.name || user.username).split(' ')[0]}</h2>
+          <h2 className="text-3xl font-black mb-1 xl:text-4xl text-white tracking-tighter"> Hello, {(dashboardName || user.firstName || user.name || user.username).split(' ')[0]}</h2>
           <p className="text-white/60 text-sm mb-8 font-medium italic">Global trade, localized intelligence.</p>
 
           <div className="grid grid-cols-2 gap-4">
