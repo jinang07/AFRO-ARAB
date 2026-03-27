@@ -143,37 +143,37 @@ class SupplierViewSet(viewsets.ModelViewSet):
                 # Create Supplier
                 supplier = Supplier.objects.create(
                     user=user,
-                    company_name=data.get('company_name'),
-                    personal_name=data.get('personal_name'),
-                    designation=data.get('designation'),
-                    mobile_number=data.get('mobile_number'),
-                    telephone_number=data.get('telephone_number'),
-                    email=data.get('email'),
-                    address=data.get('address'),
-                    city=data.get('city'),
-                    state=data.get('state'),
-                    pin_code=data.get('pin_code'),
-                    country=data.get('country'),
-                    website=data.get('website'),
-                    business_category=data.get('business_category'),
-                    iec_code=data.get('iec_code'),
-                    gst_number=data.get('gst_number'),
-                    pan_number=data.get('pan_number'),
-                    turnover_2y=data.get('turnover_2y'),
-                    product_available=data.get('product_available'),
+                    company_name=data.get('company_name', ''),
+                    personal_name=data.get('personal_name', ''),
+                    designation=data.get('designation', ''),
+                    mobile_number=data.get('mobile_number', ''),
+                    telephone_number=data.get('telephone_number', ''),
+                    email=data.get('email', ''),
+                    address=data.get('address', ''),
+                    city=data.get('city', ''),
+                    state=data.get('state', ''),
+                    pin_code=data.get('pin_code', ''),
+                    country=data.get('country', ''),
+                    website=data.get('website', ''),
+                    business_category=data.get('business_category', ''),
+                    iec_code=data.get('iec_code', ''),
+                    gst_number=data.get('gst_number', ''),
+                    pan_number=data.get('pan_number', ''),
+                    turnover_2y=data.get('turnover_2y', ''),
+                    product_available=data.get('product_available', ''),
                     
                     # Bank Details
-                    account_name=data.get('account_name'),
-                    account_number=data.get('account_number'),
-                    branch=data.get('branch'),
-                    ifsc_code=data.get('ifsc_code'),
+                    account_name=data.get('account_name', ''),
+                    account_number=data.get('account_number', ''),
+                    branch=data.get('branch', ''),
+                    ifsc_code=data.get('ifsc_code', ''),
                     
                     # Files
                     brochure_file=files.get('brochure_file') or data.get('brochure_file'),
                     payment_screenshot=files.get('payment_screenshot') or data.get('payment_screenshot'),
                     
                     # Relations
-                    associate_partner=data.get('associate_partner'),
+                    associate_partner=data.get('associate_partner', ''),
                     
                     status='PENDING'
                 )
